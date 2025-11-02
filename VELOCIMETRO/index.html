@@ -3,218 +3,213 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Velocímetro Analógico Premium</title>
+<title>Velocímetro com Mapa Ao Vivo</title>
+
+<!-- LEAFLET CSS -->
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha512-sA+e2vGkR7uOph6VVG2h7HjQ9hCv0lbbV7lDHoMQn6Z8m7oSeVOfSRPQa6Ck58h7K3tnT6h5X1z8PzvJ8lozUg=="
+  crossorigin=""
+/>
+
 <style>
 body {
   margin: 0;
   background: radial-gradient(circle at center, #111 0%, #000 100%);
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-direction: column;
-  height: 100vh;
+  align-items: center;
   color: #fff;
   font-family: "Segoe UI", sans-serif;
+  height: 100vh;
   overflow: hidden;
 }
 h1 {
+  margin: 10px 0;
   font-weight: 600;
-  margin-bottom: 10px;
   text-shadow: 0 0 5px #000;
 }
+#container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
 canvas {
-  width: 340px;
-  height: 340px;
+  width: 300px;
+  height: 300px;
   border-radius: 50%;
   background: radial-gradient(circle at 50% 50%, #000 0%, #060606 60%, #111 100%);
   box-shadow: inset 0 0 20px #000, 0 0 25px #111;
 }
+#map {
+  width: 360px;
+  height: 360px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 0 10px #000;
+}
 #speed {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
-  margin-top: 15px;
-  text-shadow: 0 0 5px #000;
+  margin-top: 10px;
 }
 #status {
-  margin-top: 10px;
-  font-size: 0.95rem;
-  opacity: 0.85;
-  text-align: center;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  opacity: 0.8;
 }
 </style>
 </head>
 <body>
-<h1>Velocímetro Analógico</h1>
-<canvas id="dial" width="340" height="340"></canvas>
+<h1>Velocímetro + Mapa Ao Vivo</h1>
+<div id="container">
+  <canvas id="dial" width="300" height="300"></canvas>
+  <div id="map"></div>
+</div>
 <div id="speed">0 mph</div>
 <div id="status">Inicializando GPS...</div>
 
+<!-- LEAFLET JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha512-o9N1j7sHU4K4qF4Kk1BeXr5WPCuTtxh5y9WqS7R7kPOhVQtw8uLUdZ8FJbWc5KyYVU6wT8UN4iFddMCxC8ZfKw=="
+  crossorigin=""
+></script>
+
 <script>
-// ===================== CONFIGURAÇÕES =====================
+// ======== CONFIGURAÇÕES GERAIS ========
 const canvas = document.getElementById("dial");
 const ctx = canvas.getContext("2d");
 const W = canvas.width, H = canvas.height;
-const CX = W / 2, CY = H / 2, R = W * 0.42;
+const CX = W/2, CY = H/2, R = W*0.42;
 let current = 0, target = 0, v = 0;
-const MAX_MPH = 120, START = 0.75 * Math.PI, SWEEP = 1.5 * Math.PI;
+const MAX_MPH = 120, START = 0.75*Math.PI, SWEEP = 1.5*Math.PI;
 
-// ===================== DESENHO DO MOSTRADOR =====================
+// ======== MAPA ========
+let map, marker;
+function initMap() {
+  map = L.map("map").setView([0, 0], 2);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: '© OpenStreetMap',
+    maxZoom: 18
+  }).addTo(map);
+  marker = L.marker([0, 0]).addTo(map);
+}
+
+// ======== DESENHAR VELOCÍMETRO ========
 function drawDial(speed) {
   ctx.clearRect(0, 0, W, H);
-
-  // Borda cromada realista
   const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, "#d9d9d9");
+  grad.addColorStop(0, "#ccc");
   grad.addColorStop(0.5, "#888");
-  grad.addColorStop(1, "#d9d9d9");
+  grad.addColorStop(1, "#ccc");
   ctx.beginPath();
-  ctx.arc(CX, CY, R + 10, 0, 2 * Math.PI);
-  ctx.lineWidth = 10;
+  ctx.arc(CX, CY, R+8, 0, 2*Math.PI);
+  ctx.lineWidth = 8;
   ctx.strokeStyle = grad;
   ctx.stroke();
 
-  // Fundo metálico
   const bgGrad = ctx.createRadialGradient(CX, CY, 5, CX, CY, R);
   bgGrad.addColorStop(0, "#111");
   bgGrad.addColorStop(1, "#000");
   ctx.beginPath();
-  ctx.arc(CX, CY, R, 0, 2 * Math.PI);
+  ctx.arc(CX, CY, R, 0, 2*Math.PI);
   ctx.fillStyle = bgGrad;
   ctx.fill();
 
   ctx.save();
   ctx.translate(CX, CY);
 
-  // Escala externa (MPH)
-  const steps = 12; // 0–120 mph
-  for (let i = 0; i <= steps; i++) {
-    const ang = START + (i / steps) * SWEEP;
-    const x1 = Math.cos(ang) * (R - 10);
-    const y1 = Math.sin(ang) * (R - 10);
-    const x2 = Math.cos(ang) * (R - 25);
-    const y2 = Math.sin(ang) * (R - 25);
+  const steps = 12;
+  for (let i=0; i<=steps; i++) {
+    const ang = START + (i/steps)*SWEEP;
+    const x1 = Math.cos(ang)*(R-10);
+    const y1 = Math.sin(ang)*(R-10);
+    const x2 = Math.cos(ang)*(R-25);
+    const y2 = Math.sin(ang)*(R-25);
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 2.5;
     ctx.stroke();
-
-    // Números MPH
-    const tx = Math.cos(ang) * (R - 45);
-    const ty = Math.sin(ang) * (R - 45);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 16px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(i * 10, tx, ty);
+    const tx = Math.cos(ang)*(R-40);
+    const ty = Math.sin(ang)*(R-40);
+    ctx.fillStyle="#fff";
+    ctx.font="bold 14px Arial";
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText(i*10, tx, ty);
   }
 
-  // Escala interna (km/h) em vermelho
-  const kmSteps = 10;
-  ctx.strokeStyle = "#f44";
-  for (let i = 0; i <= kmSteps; i++) {
-    const ang = START + (i / kmSteps) * SWEEP;
-    const x1 = Math.cos(ang) * (R - 35);
-    const y1 = Math.sin(ang) * (R - 35);
-    const x2 = Math.cos(ang) * (R - 50);
-    const y2 = Math.sin(ang) * (R - 50);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
-
-  // Ponteiro vermelho
-  const ang = START + Math.min(speed / MAX_MPH, 1) * SWEEP;
+  const ang = START + Math.min(speed/MAX_MPH,1)*SWEEP;
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(Math.cos(ang) * (R - 40), Math.sin(ang) * (R - 40));
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#ff2b2b";
-  ctx.shadowColor = "#f33";
-  ctx.shadowBlur = 15;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // Centro do velocímetro
-  ctx.beginPath();
-  ctx.arc(0, 0, 8, 0, 2 * Math.PI);
-  ctx.fillStyle = "#333";
-  ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#888";
-  ctx.stroke();
-
-  // Texto central
-  ctx.fillStyle = "#fff";
-  ctx.font = "bold 18px Arial";
-  ctx.fillText("MPH", 0, -20);
-  ctx.fillStyle = "#f33";
-  ctx.font = "12px Arial";
-  ctx.fillText("km/h", 0, 20);
-
+  ctx.moveTo(0,0);
+  ctx.lineTo(Math.cos(ang)*(R-35), Math.sin(ang)*(R-35));
+  ctx.lineWidth=5; ctx.strokeStyle="#ff3333"; ctx.shadowColor="#f33"; ctx.shadowBlur=15;
+  ctx.stroke(); ctx.shadowBlur=0;
+  ctx.beginPath(); ctx.arc(0,0,8,0,2*Math.PI); ctx.fillStyle="#333"; ctx.fill();
+  ctx.strokeStyle="#666"; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle="#fff"; ctx.font="bold 16px Arial"; ctx.fillText("MPH",0,-20);
   ctx.restore();
 }
 
-// ===================== ANIMAÇÃO SUAVE =====================
+// ======== ANIMAÇÃO ========
 function animate() {
-  const dt = 0.016;
-  const a = 12 * (target - current) - 6 * v;
-  v += a * dt;
-  current += v * dt;
+  const dt=0.016; const a=10*(target-current)-5*v;
+  v+=a*dt; current+=v*dt;
   drawDial(current);
-  document.getElementById("speed").textContent = `${Math.round(current)} mph`;
+  document.getElementById("speed").textContent=Math.round(current)+" mph";
   requestAnimationFrame(animate);
 }
 
-// ===================== GPS COM FALLBACK =====================
-let gpsOk = false;
-function startGPS() {
-  const status = document.getElementById("status");
-  if (!("geolocation" in navigator)) {
-    simulateSpeed("Seu navegador não suporta GPS (modo simulação).");
+// ======== GPS ========
+let gpsOk=false;
+function startGPS(){
+  const status=document.getElementById("status");
+  if(!("geolocation" in navigator)){
+    simulateSpeed("Navegador sem GPS (modo simulação)");
     return;
   }
-
-  status.textContent = "Ativando GPS...";
+  status.textContent="Ativando GPS...";
   navigator.geolocation.watchPosition(
-    (pos) => {
-      gpsOk = true;
-      if (pos.coords.speed != null) {
-        const mph = pos.coords.speed * 2.23694; // m/s -> mph
-        target = Math.min(mph, MAX_MPH);
+    (pos)=>{
+      gpsOk=true;
+      const {latitude,longitude,speed}=pos.coords;
+      if(speed!=null){
+        target=Math.min(speed*2.23694,MAX_MPH);
       }
-      const hora = new Date(pos.timestamp).toLocaleTimeString("pt-BR");
-      status.textContent = `📡 Atualizado às ${hora}`;
+      marker.setLatLng([latitude,longitude]);
+      map.setView([latitude,longitude],16);
+      status.textContent=`📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
     },
-    (err) => {
-      let msg = "";
-      switch (err.code) {
-        case 1: msg = "🚫 Permissão negada. Ative o GPS."; break;
-        case 2: msg = "⚠️ Sinal não encontrado."; break;
-        case 3: msg = "⏱️ Tempo esgotado tentando obter fix GPS."; break;
-        default: msg = "Erro desconhecido: " + err.message;
-      }
-      status.textContent = msg + " (modo simulação)";
-      if (!gpsOk) simulateSpeed();
+    (err)=>{
+      let msg="⚠️ Erro: ";
+      if(err.code===1) msg+="Permissão negada";
+      else if(err.code===2) msg+="Sinal não encontrado";
+      else if(err.code===3) msg+="Tempo esgotado";
+      else msg+=err.message;
+      status.textContent=msg+" (modo simulação)";
+      if(!gpsOk) simulateSpeed();
     },
-    { enableHighAccuracy: true, maximumAge: 20000, timeout: 30000 }
+    {enableHighAccuracy:true,maximumAge:20000,timeout:30000}
   );
 }
 
-// ===================== SIMULAÇÃO DE VELOCIDADE (SEM GPS) =====================
-function simulateSpeed(msg) {
-  const status = document.getElementById("status");
-  if (msg) status.textContent = msg;
-  setInterval(() => {
-    const sim = (Math.sin(Date.now() / 2000) + 1) * 60; // 0–120 mph
-    target = sim;
-  }, 1000);
+// ======== MODO SIMULAÇÃO ========
+function simulateSpeed(msg){
+  const status=document.getElementById("status");
+  if(msg) status.textContent=msg;
+  setInterval(()=>{
+    const sim=(Math.sin(Date.now()/2000)+1)*60;
+    target=sim;
+  },1000);
 }
 
-// ===================== INICIALIZAÇÃO =====================
+// ======== INICIAR ========
+initMap();
 drawDial(0);
 requestAnimationFrame(animate);
 startGPS();
