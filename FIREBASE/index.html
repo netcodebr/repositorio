@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Gerador Automático Firebase Hosting (Ctrl+A)</title>
+<link rel="icon" type="image/png" href="https://firebase.google.com/images/icons/firebase_studio.png">
+
 <style>
 body {
   font-family: "Inter", sans-serif;
@@ -12,7 +15,19 @@ body {
   margin: 0;
   padding: 20px;
 }
-h1 { color: #00aaff; text-align: center; }
+h1 {
+  color: #00aaff;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+h1 img {
+  width: 36px;
+  height: 36px;
+  vertical-align: middle;
+}
 textarea, button {
   width: 100%;
   margin: 6px 0;
@@ -21,25 +36,50 @@ textarea, button {
   border: none;
   font-size: 1rem;
 }
-textarea { height: 200px; resize: vertical; }
+textarea {
+  height: 200px;
+  resize: vertical;
+}
 button {
-  background: #004aad; color: white; font-weight: bold; cursor: pointer;
+  background: #004aad;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
 }
-button:hover { background: #003b8e; }
+button:hover {
+  background: #003b8e;
+}
 pre {
-  background: #111a2a; padding: 12px; border-radius: 8px;
-  overflow-x: auto; font-size: 0.9rem; white-space: pre-wrap; color: #8ef2ff;
+  background: #111a2a;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+  color: #8ef2ff;
 }
-.output { margin-top: 20px; }
+.output {
+  margin-top: 20px;
+}
+p {
+  color: #cbd5e1;
+}
 </style>
 </head>
 <body>
 
-<h1>⚙️ Gerador Automático Firebase Hosting</h1>
+<h1>
+  <img src="https://firebase.google.com/images/icons/firebase_studio.png" alt="Firebase">
+  Gerador Automático Firebase Hosting
+</h1>
+
 <p>📋 Cole abaixo tudo que copiou da página de configurações do Firebase (Ctrl+A → Ctrl+C → Ctrl+V):</p>
 
-<textarea id="dados"></textarea>
+<textarea id="dados" placeholder="Cole aqui o conteúdo copiado da página do Firebase..."></textarea>
+
 <button onclick="gerar()">Gerar Arquivos 🔥</button>
+
 <div id="output" class="output"></div>
 
 <script>
@@ -47,7 +87,7 @@ function gerar() {
   const texto = document.getElementById('dados').value;
   if (!texto.trim()) return alert("Cole o texto da página de configurações do Firebase!");
 
-  // Extrair valores
+  // Extrair valores automaticamente
   const apiKey = texto.match(/apiKey["']?\s*[:=]\s*["']([^"']+)/i)?.[1] || "";
   const projectId = texto.match(/projectId["']?\s*[:=]\s*["']([^"']+)/i)?.[1] || "";
   const projectName = texto.match(/Nome do projeto\s*([\w\-\_]+)/i)?.[1] || projectId;
@@ -55,7 +95,7 @@ function gerar() {
   const appId = texto.match(/appId["']?\s*[:=]\s*["']([^"']+)/i)?.[1] || "";
 
   if (!apiKey || !projectId || !projectNumber) {
-    alert("Não foi possível detectar todos os dados necessários. Verifique o texto colado.");
+    alert("❌ Não foi possível detectar todos os dados necessários. Verifique se copiou o texto completo da página do Firebase.");
     return;
   }
 
@@ -148,8 +188,8 @@ export const app = initializeApp(firebaseConfig);
 
   <h3>📄 firebase.js</h3><pre>${firebaseJS}</pre>
 
-  <p>💡 No GitHub, crie o secret com o nome <b>CHAVE_ACESSO_GOOGLE_CREDENTIALS</b><br>
-  e cole o conteúdo completo do JSON da Conta de Serviço.</p>
+  <p>💡 Crie o secret no GitHub com o nome <b style="color:#00ff88;">CHAVE_ACESSO_GOOGLE_CREDENTIALS</b><br>
+  e cole o conteúdo completo do JSON da sua conta de serviço.</p>
   `;
 }
 </script>
