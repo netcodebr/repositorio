@@ -3,7 +3,6 @@ const BASE = '/repositorio/VELOCIMETRO/';
 const FILES_TO_CACHE = [
   BASE,
   BASE + 'index.html',
-  BASE + 'velocimetro.html',
   BASE + 'manifest.webmanifest',
   BASE + 'icons/icon-192.png',
   BASE + 'icons/icon-256.png',
