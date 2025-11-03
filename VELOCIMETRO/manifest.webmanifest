@@ -1,7 +1,7 @@
 {
-  "name": "Velocímetro PWA",
+  "name": "Velocímetro GPS PWA",
   "short_name": "Velocímetro",
-  "description": "Velocímetro instalável em PWA com ponteiro animado.",
+  "description": "Velocímetro em tempo real via GPS, com ponteiro animado.",
   "start_url": "/repositorio/VELOCIMETRO/index.html",
   "scope": "/repositorio/VELOCIMETRO/",
   "display": "standalone",
