@@ -4,9 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Velocímetro PWA</title>
+
+<!-- 🔗 Manifest e tema -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b1220">
+
+<!-- 🔘 Ícone -->
 <link rel="icon" href="icons/icon-192.png" type="image/png">
+
 <style>
   body {
     margin: 0;
@@ -26,14 +31,14 @@
 </head>
 <body>
 
-<!-- carregamos o velocímetro dentro do iframe pra separar o código -->
+<!-- carrega o velocímetro -->
 <iframe src="velocimetro.html" title="Velocímetro"></iframe>
 
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('service-worker.js')
-  .then(() => console.log('✅ Service Worker registrado'))
-  .catch(err => console.error('SW erro:', err));
+    .then(() => console.log('✅ Service Worker registrado'))
+    .catch(err => console.error('SW erro:', err));
 }
 </script>
 
