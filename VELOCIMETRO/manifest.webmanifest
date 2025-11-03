@@ -1,7 +1,7 @@
 {
   "name": "Velocímetro PWA",
   "short_name": "Velocímetro",
-  "description": "Velocímetro instalável em PWA com ponteiro animado e modo GPS.",
+  "description": "Velocímetro instalável em PWA com ponteiro animado.",
   "start_url": "/repositorio/VELOCIMETRO/index.html",
   "scope": "/repositorio/VELOCIMETRO/",
   "display": "standalone",
@@ -26,13 +26,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/repositorio/VELOCIMETRO/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
     }
   ]
 }
