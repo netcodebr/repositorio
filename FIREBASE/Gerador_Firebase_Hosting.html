@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador Automático Firebase Hosting (Ctrl+A)</title>
+<style>
+body {
+  font-family: "Inter", sans-serif;
+  background: #0b1120;
+  color: #f1f5f9;
+  margin: 0;
+  padding: 20px;
+}
+h1 { color: #00aaff; text-align: center; }
+textarea, button {
+  width: 100%;
+  margin: 6px 0;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+}
+textarea { height: 200px; resize: vertical; }
+button {
+  background: #004aad; color: white; font-weight: bold; cursor: pointer;
+}
+button:hover { background: #003b8e; }
+pre {
+  background: #111a2a; padding: 12px; border-radius: 8px;
+  overflow-x: auto; font-size: 0.9rem; white-space: pre-wrap; color: #8ef2ff;
+}
+.output { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<h1>⚙️ Gerador Automático Firebase Hosting</h1>
+<p>📋 Cole abaixo tudo que copiou da página de configurações do Firebase (Ctrl+A → Ctrl+C → Ctrl+V):</p>
+
+<textarea id="dados"></textarea>
+<button onclick="gerar()">Gerar Arquivos 🔥</button>
+<div id="output" class="output"></div>
+
+<script>
+function gerar() {
+  const texto = document.getElementById('dados').value;
+  if (!texto.trim()) return alert("Cole o texto da página de configurações do Firebase!");
+
+  // Extrair valores
+  const apiKey = texto.match(/apiKey["']?\s*[:=]\s*["']([^"']+)/i)?.[1] || "";
+  const projectId = texto.match(/projectId["']?\s*[:=]\s*["']([^"']+)/i)?.[1] || "";
+  const projectName = texto.match(/Nome do projeto\s*([\w\-\_]+)/i)?.[1] || projectId;
+  const projectNumber = texto.match(/Número do projeto\s*(\d+)/i)?.[1] || "";
+  const appId = texto.match(/appId["']?\s*[:=]\s*["']([^"']+)/i)?.[1] || "";
+
+  if (!apiKey || !projectId || !projectNumber) {
+    alert("Não foi possível detectar todos os dados necessários. Verifique o texto colado.");
+    return;
+  }
+
+  // firebase.json
+  const firebaseJson = `{
+  "hosting": {
+    "site": "${projectId}",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "cleanUrls": true,
+    "rewrites": [
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}`;
+
+  // .firebaserc
+  const firebaserc = `{
+  "projects": {
+    "default": "${projectId}"
+  },
+  "targets": {
+    "${projectId}": {
+      "hosting": {
+        "${projectId}": [
+          "${projectId}"
+        ]
+      }
+    }
+  }
+}`;
+
+  // workflow GitHub Actions
+  const workflow = `name: Deploy Firebase Hosting - ${projectName}
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧩 Clonar repositório
+        uses: actions/checkout@v4
+
+      - name: 🔥 Instalar Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: 🚀 Deploy para Firebase Hosting
+        env:
+          CHAVE_ACESSO_GOOGLE_CREDENTIALS: \${{ secrets.CHAVE_ACESSO_GOOGLE_CREDENTIALS }}
+        run: |
+          echo "\${CHAVE_ACESSO_GOOGLE_CREDENTIALS}" > \${HOME}/gcp-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=\${HOME}/gcp-key.json
+          firebase deploy --only hosting --project ${projectId}
+`;
+
+  // firebase.js
+  const firebaseJS = `// firebase.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+
+export const firebaseConfig = {
+  apiKey: "${apiKey}",
+  authDomain: "${projectId}.firebaseapp.com",
+  projectId: "${projectId}",
+  storageBucket: "${projectId}.appspot.com",
+  messagingSenderId: "${projectNumber}",
+  appId: "${appId}"
+};
+
+export const app = initializeApp(firebaseConfig);
+`;
+
+  // saída
+  document.getElementById('output').innerHTML = `
+  <h2>✅ Arquivos gerados automaticamente</h2>
+
+  <h3>📄 firebase.json</h3><pre>${firebaseJson}</pre>
+
+  <h3>📄 .firebaserc</h3><pre>${firebaserc}</pre>
+
+  <h3>📄 .github/workflows/firebase-hosting.yml</h3><pre>${workflow}</pre>
+
+  <h3>📄 firebase.js</h3><pre>${firebaseJS}</pre>
+
+  <p>💡 No GitHub, crie o secret com o nome <b>CHAVE_ACESSO_GOOGLE_CREDENTIALS</b><br>
+  e cole o conteúdo completo do JSON da Conta de Serviço.</p>
+  `;
+}
+</script>
+
+</body>
+</html>
