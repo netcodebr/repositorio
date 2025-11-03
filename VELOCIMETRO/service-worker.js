@@ -1,12 +1,13 @@
 const CACHE_NAME = 'velocimetro-v1';
+const BASE = '/repositorio/VELOCIMETRO/';
 const FILES_TO_CACHE = [
-  './',
-  './index.html',
-  './velocimetro.html',
-  './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-256.png',
-  './icons/icon-512.png'
+  BASE,
+  BASE + 'index.html',
+  BASE + 'velocimetro.html',
+  BASE + 'manifest.webmanifest',
+  BASE + 'icons/icon-192.png',
+  BASE + 'icons/icon-256.png',
+  BASE + 'icons/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
@@ -19,7 +20,7 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => 
+    caches.keys().then(keys =>
       Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : null)))
     )
   );
@@ -30,6 +31,6 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     caches.match(e.request)
       .then(resp => resp || fetch(e.request))
-      .catch(() => caches.match('./index.html'))
+      .catch(() => caches.match(BASE + 'index.html'))
   );
 });
