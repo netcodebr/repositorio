@@ -8,20 +8,23 @@
   <!-- 🧭 Manifesto -->
   <link rel="manifest" href="manifest.webmanifest">
 
-  <!-- 📱 Compatibilidade iOS e Android -->
+  <!-- 📱 Compatibilidade -->
   <meta name="application-name" content="Conversor de Imagens">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Conversor">
-  <link rel="apple-touch-icon" href="icons/imagem_icon_512x512.png">
+  <link rel="apple-touch-icon" href="icons/icon-512.png">
 
-  <!-- 🎨 Aparência e cor do tema -->
   <meta name="theme-color" content="#004aad">
   <meta name="background-color" content="#004aad">
-  <meta name="description" content="PWA para converter e gerar ícones em múltiplos formatos e tamanhos.">
-  <link rel="icon" type="image/png" href="icons/imagem_icon_192x192.png">
+  <meta name="description" content="PWA para converter e gerar ícones em múltiplos formatos e tamanhos. Criado por Nelson Ferreira do Nascimento Junior.">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
 
-  <!-- 🖼️ Splash Screen personalizada -->
+  <!-- 📦 Bibliotecas -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <style>
     :root {
       --cor-primaria: #004aad;
@@ -44,21 +47,18 @@
       text-align: center;
     }
 
-    h1 {
-      color: var(--cor-primaria);
-      margin-bottom: 1rem;
-    }
+    h1 { color: var(--cor-primaria); margin-bottom: 1rem; }
 
     .card {
       background: var(--cor-card);
       padding: 1.5rem;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 420px;
+      max-width: 440px;
       width: 100%;
     }
 
-    input[type="file"], select, input[type="number"], button {
+    input, select, button {
       width: 100%;
       padding: 10px;
       margin: 0.5rem 0;
@@ -73,14 +73,13 @@
       transition: 0.3s;
     }
 
-    button:hover {
-      background: var(--cor-primaria-hover);
-    }
+    button:hover { background: var(--cor-primaria-hover); }
 
     img {
       margin-top: 1rem;
       max-width: 100%;
       border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     #progress {
@@ -106,48 +105,44 @@
       opacity: 0.7;
     }
 
-    /* Tela de Splash (mostrada ao abrir como app) */
-    #splash {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: var(--cor-primaria);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease;
+    #dropZone {
+      margin-top: 1rem;
+      padding: 1.5rem;
+      border: 2px dashed var(--cor-primaria);
+      border-radius: 10px;
+      background: #f9fafb;
+      color: var(--cor-texto);
+      cursor: pointer;
+      transition: 0.3s;
     }
 
-    #splash img {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 20px;
-      animation: fadeIn 1s ease;
+    #dropZone.hover {
+      background: #e0e7ff;
+      border-color: var(--cor-primaria-hover);
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
+    #clearBtn {
+      background: #e11d48;
+      margin-top: 0.5rem;
+    }
+
+    #clearBtn:hover {
+      background: #be123c;
+    }
+
+    #info {
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      color: #555;
     }
   </style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="splash">
-    <img src="icons/imagem_icon_192x192.png" alt="Logo PWA">
-    <h2>Conversor de Imagens</h2>
-    <p>Preparando o aplicativo...</p>
-  </div>
-
   <h1>Conversor e Gerador de Ícones PWA</h1>
 
   <div class="card">
     <input type="file" id="upload" accept="image/*">
+    <div id="dropZone">🖼️ Arraste uma imagem aqui ou clique para selecionar</div>
 
     <label for="format">Formato:</label>
     <select id="format">
@@ -171,110 +166,179 @@
     </div>
 
     <button id="convertBtn">Converter e Baixar</button>
-    <button id="generateAllBtn">Gerar Ícones PWA (48–512px)</button>
+    <button id="generateAllBtn">Gerar Ícones PWA + Manifest (ZIP)</button>
+    <button id="clearBtn">🧹 Limpar Imagem Atual</button>
 
-    <div id="progress">
-      <div id="progress-bar"></div>
-    </div>
-
+    <div id="progress"><div id="progress-bar"></div></div>
     <div id="preview"></div>
+    <div id="info"></div>
   </div>
 
-  <footer>💡 PWA reconhecido como WebAPK (instalação automática opcional)</footer>
+  <footer>🧑‍💻 Desenvolvido por <strong>Nelson Ferreira do Nascimento Junior</strong> — 2025</footer>
 
 <script>
-// Oculta a splash após carregamento
-window.addEventListener("load", () => {
-  const splash = document.getElementById("splash");
-  setTimeout(() => splash.style.opacity = "0", 700);
-  setTimeout(() => splash.style.display = "none", 1200);
-});
-
-// Registro do Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js')
-    .then(() => console.log("✅ Service Worker registrado com sucesso!"));
-}
-
-// Detecta o evento de instalação (sem forçar prompt)
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  window.deferredPrompt = e;
-  console.log("📱 WebAPK detectado - o navegador decidirá se exibe o prompt.");
-});
-
 const upload = document.getElementById("upload");
+const dropZone = document.getElementById("dropZone");
 const format = document.getElementById("format");
 const sizeSelect = document.getElementById("size");
 const customSizeDiv = document.getElementById("customSize");
 const preview = document.getElementById("preview");
 const progress = document.getElementById("progress");
 const progressBar = document.getElementById("progress-bar");
-let currentImage = null;
+const clearBtn = document.getElementById("clearBtn");
+const info = document.getElementById("info");
+let currentImage = null, fileName = "";
 
 sizeSelect.addEventListener("change", () => {
   customSizeDiv.style.display = sizeSelect.value === "custom" ? "block" : "none";
 });
 
+function carregarImagem(src, nome = "imagem") {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = src;
+  img.onload = () => {
+    currentImage = img;
+    fileName = nome;
+    preview.innerHTML = "";
+    preview.appendChild(img);
+    info.textContent = `${nome} — ${img.width}x${img.height}px`;
+    Swal.fire({
+      icon: "success",
+      title: "Imagem carregada!",
+      text: "Você pode converter ou gerar ícones agora.",
+      showConfirmButton: false,
+      timer: 1600
+    });
+  };
+}
+
 upload.addEventListener("change", (e) => {
   const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const img = new Image();
-    img.src = event.target.result;
-    img.onload = () => {
-      currentImage = img;
-      preview.innerHTML = "";
-      preview.appendChild(img);
-    };
-  };
-  reader.readAsDataURL(file);
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => carregarImagem(event.target.result, file.name);
+    reader.readAsDataURL(file);
+  }
 });
 
-function converterEbaixar(img, formato, largura, altura, nomeExtra = "") {
+dropZone.addEventListener("click", () => upload.click());
+dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("hover"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("hover"));
+dropZone.addEventListener("drop", (e) => {
+  e.preventDefault(); dropZone.classList.remove("hover");
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = (event) => carregarImagem(event.target.result, file.name);
+    reader.readAsDataURL(file);
+  } else {
+    const url = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
+    if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+      carregarImagem(url, url.split("/").pop());
+    } else {
+      Swal.fire("Erro", "🚫 Tipo de arquivo não suportado.", "error");
+    }
+  }
+});
+
+clearBtn.addEventListener("click", () => {
+  if (!currentImage) {
+    Swal.fire("Aviso", "Nenhuma imagem para limpar.", "warning");
+    return;
+  }
+  currentImage = null;
+  preview.innerHTML = "";
+  info.textContent = "";
+  upload.value = "";
+  Swal.fire({
+    icon: "info",
+    title: "Imagem removida",
+    text: "Você pode arrastar outra agora!",
+    timer: 1500,
+    showConfirmButton: false
+  });
+});
+
+function gerarBase64(img, formato, largura, altura) {
   const canvas = document.createElement("canvas");
   canvas.width = largura;
   canvas.height = altura;
   const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0, largura, altura);
-  const base64 = canvas.toDataURL(formato);
-  const a = document.createElement("a");
-  a.href = base64;
-  a.download = `imagem${nomeExtra}_${largura}x${altura}.${formato.split("/")[1]}`;
-  a.click();
+  return canvas.toDataURL(formato);
 }
 
 document.getElementById("convertBtn").addEventListener("click", () => {
-  if (!currentImage) return alert("Selecione uma imagem primeiro!");
+  if (!currentImage) return Swal.fire("Erro", "Selecione ou arraste uma imagem primeiro!", "error");
   let width = currentImage.width, height = currentImage.height;
   if (sizeSelect.value !== "original") {
     if (sizeSelect.value === "custom") {
       width = parseInt(document.getElementById("customWidth").value) || width;
       height = parseInt(document.getElementById("customHeight").value) || height;
-    } else {
-      width = height = parseInt(sizeSelect.value);
-    }
+    } else width = height = parseInt(sizeSelect.value);
   }
-  converterEbaixar(currentImage, format.value, width, height);
+  const base64 = gerarBase64(currentImage, format.value, width, height);
+  const a = document.createElement("a");
+  a.href = base64;
+  a.download = `icon-${width}.${format.value.split("/")[1]}`;
+  a.click();
+  Swal.fire("✅ Sucesso!", `Imagem convertida para ${width}x${height}px`, "success");
 });
 
 document.getElementById("generateAllBtn").addEventListener("click", async () => {
-  if (!currentImage) return alert("Selecione uma imagem primeiro!");
-  const tamanhos = [48, 72, 96, 128, 144, 152, 192, 256, 384, 512];
+  if (!currentImage) return Swal.fire("Erro", "Selecione ou arraste uma imagem primeiro!", "error");
+
+  const tamanhos = [48,72,96,128,144,152,192,256,384,512];
   const formato = "image/png";
+  const zip = new JSZip();
+
   progress.style.display = "block";
   progressBar.style.width = "0%";
+
+  const pastaIcons = zip.folder("icons");
+  const manifestIcons = [];
+
   for (let i = 0; i < tamanhos.length; i++) {
     const tamanho = tamanhos[i];
-    converterEbaixar(currentImage, formato, tamanho, tamanho, `_icon`);
+    const base64 = gerarBase64(currentImage, formato, tamanho, tamanho);
+    const base64Data = base64.split(',')[1];
+    const nome = `icon-${tamanho}.png`;
+    pastaIcons.file(nome, base64Data, {base64: true});
+    manifestIcons.push({
+      src: `icons/${nome}`,
+      sizes: `${tamanho}x${tamanho}`,
+      type: "image/png",
+      purpose: "any maskable"
+    });
     progressBar.style.width = ((i + 1) / tamanhos.length) * 100 + "%";
-    await new Promise(r => setTimeout(r, 200));
+    await new Promise(r => setTimeout(r, 120));
   }
-  setTimeout(() => {
+
+  const manifest = {
+    name: "Conversor de Imagens PWA",
+    short_name: "Conversor",
+    description: "PWA para converter e gerar ícones. Criado por Nelson Ferreira do Nascimento Junior.",
+    start_url: "./index.html",
+    display: "standalone",
+    background_color: "#004aad",
+    theme_color: "#004aad",
+    icons: manifestIcons,
+    author: "Nelson Ferreira do Nascimento Junior"
+  };
+
+  zip.file("manifest.webmanifest", JSON.stringify(manifest, null, 2));
+
+  zip.generateAsync({type:"blob"}).then(content => {
+    saveAs(content, "icones_pwa.zip");
     progress.style.display = "none";
-    alert("🎉 Todos os ícones foram gerados!");
-  }, 500);
+    Swal.fire({
+      icon: "success",
+      title: "🎉 Ícones e manifest gerados!",
+      text: "O arquivo icones_pwa.zip foi baixado com sucesso.",
+      confirmButtonText: "OK"
+    });
+  });
 });
 </script>
 </body>
