@@ -1,227 +1,41 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Velocímetro com Mapa Ao Vivo</title>
-
-<!-- LEAFLET -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Velocímetro PWA</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1220">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
 <style>
-body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: radial-gradient(circle at center, #0b0b0b, #000);
-  color: #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  overflow: hidden;
-}
-h1 {
-  font-weight: 600;
-  margin-bottom: 8px;
-  text-shadow: 0 0 5px #000;
-}
-#container {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-}
-canvas {
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #111 0%, #000 100%);
-  box-shadow: inset 0 0 15px #000, 0 0 20px #222;
-}
-#map {
-  width: 340px;
-  height: 340px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 0 15px #000;
-}
-#speed {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-top: 10px;
-}
-#status {
-  margin-top: 5px;
-  font-size: 0.9rem;
-  opacity: 0.85;
-}
+  body {
+    margin: 0;
+    display: grid;
+    place-items: center;
+    height: 100vh;
+    background: #0b1220;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+  }
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
 </style>
 </head>
 <body>
-<h1>Velocímetro com Mapa</h1>
-<div id="container">
-  <canvas id="dial" width="300" height="300"></canvas>
-  <div id="map"></div>
-</div>
-<div id="speed">0 km/h</div>
-<div id="status">Inicializando GPS...</div>
 
-<!-- LEAFLET JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- carregamos o velocímetro dentro do iframe pra separar o código -->
+<iframe src="velocimetro.html" title="Velocímetro"></iframe>
 
 <script>
-const canvas = document.getElementById("dial");
-const ctx = canvas.getContext("2d");
-const W = canvas.width, H = canvas.height;
-const CX = W / 2, CY = H / 2, R = W * 0.42;
-let current = 0, target = 0, v = 0;
-const MAX_SPEED = 240;
-const START = Math.PI * 0.75, SWEEP = Math.PI * 1.5;
-const speedEl = document.getElementById("speed");
-const statusEl = document.getElementById("status");
-
-// ======== MAPA ========
-let map, marker;
-function initMap() {
-  map = L.map("map").setView([0, 0], 2);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19
-  }).addTo(map);
-  marker = L.marker([0, 0]).addTo(map);
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js')
+  .then(() => console.log('✅ Service Worker registrado'))
+  .catch(err => console.error('SW erro:', err));
 }
-
-// ======== VELOCÍMETRO ========
-function drawDial(speed) {
-  ctx.clearRect(0, 0, W, H);
-
-  // fundo + borda
-  const grad = ctx.createLinearGradient(0, 0, W, H);
-  grad.addColorStop(0, "#ccc");
-  grad.addColorStop(0.5, "#888");
-  grad.addColorStop(1, "#ccc");
-  ctx.beginPath();
-  ctx.arc(CX, CY, R + 8, 0, 2 * Math.PI);
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = grad;
-  ctx.stroke();
-
-  const g2 = ctx.createRadialGradient(CX, CY, 10, CX, CY, R);
-  g2.addColorStop(0, "#111");
-  g2.addColorStop(1, "#000");
-  ctx.beginPath();
-  ctx.arc(CX, CY, R, 0, 2 * Math.PI);
-  ctx.fillStyle = g2;
-  ctx.fill();
-
-  ctx.save();
-  ctx.translate(CX, CY);
-
-  const steps = 12;
-  for (let i = 0; i <= steps; i++) {
-    const a = START + (i / steps) * SWEEP;
-    const x1 = Math.cos(a) * (R - 10);
-    const y1 = Math.sin(a) * (R - 10);
-    const x2 = Math.cos(a) * (R - 25);
-    const y2 = Math.sin(a) * (R - 25);
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    const tx = Math.cos(a) * (R - 40);
-    const ty = Math.sin(a) * (R - 40);
-    ctx.fillStyle = "#fff";
-    ctx.font = "bold 14px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(i * 20, tx, ty);
-  }
-
-  // ponteiro
-  const a = START + Math.min(speed / MAX_SPEED, 1) * SWEEP;
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.lineTo(Math.cos(a) * (R - 35), Math.sin(a) * (R - 35));
-  ctx.lineWidth = 5;
-  ctx.strokeStyle = "#ff3333";
-  ctx.shadowColor = "#f33";
-  ctx.shadowBlur = 15;
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-
-  // centro
-  ctx.beginPath();
-  ctx.arc(0, 0, 8, 0, 2 * Math.PI);
-  ctx.fillStyle = "#333";
-  ctx.fill();
-  ctx.strokeStyle = "#666";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-// ======== ANIMAÇÃO ========
-function animate() {
-  const dt = 0.016;
-  const a = 10 * (target - current) - 5 * v;
-  v += a * dt;
-  current += v * dt;
-  drawDial(current);
-  speedEl.textContent = Math.round(current) + " km/h";
-  requestAnimationFrame(animate);
-}
-
-// ======== GPS ========
-let gpsOk = false;
-function startGPS() {
-  if (!("geolocation" in navigator)) {
-    simulateSpeed("🚫 GPS não disponível (modo simulado)");
-    return;
-  }
-
-  statusEl.textContent = "📡 Ativando GPS...";
-  navigator.geolocation.watchPosition(
-    (pos) => {
-      gpsOk = true;
-      const { latitude, longitude, speed } = pos.coords;
-      const kmh = (speed || 0) * 3.6;
-      target = Math.min(kmh, MAX_SPEED);
-      marker.setLatLng([latitude, longitude]);
-      map.setView([latitude, longitude], 16);
-      statusEl.textContent = `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-    },
-    (err) => {
-      let msg = "⚠️ ";
-      if (err.code === 1) msg += "Permissão negada";
-      else if (err.code === 2) msg += "Sinal não encontrado";
-      else if (err.code === 3) msg += "Tempo esgotado";
-      else msg += err.message;
-      statusEl.textContent = msg + " (modo simulado)";
-      if (!gpsOk) simulateSpeed();
-    },
-    { enableHighAccuracy: true, timeout: 30000, maximumAge: 20000 }
-  );
-}
-
-// ======== SIMULAÇÃO ========
-function simulateSpeed(msg) {
-  if (msg) statusEl.textContent = msg;
-  setInterval(() => {
-    const s = (Math.sin(Date.now() / 2000) + 1) * 120;
-    target = s;
-  }, 1000);
-}
-
-// ======== INICIAR ========
-drawDial(0);
-requestAnimationFrame(animate);
-initMap();
-startGPS();
 </script>
+
 </body>
 </html>
