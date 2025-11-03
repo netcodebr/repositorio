@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Conversor de Imagens PWA</title>
 
-  <!-- 🧭 Manifesto -->
+  <!-- 🧭 Manifest -->
   <link rel="manifest" href="manifest.webmanifest">
 
   <!-- 📱 Compatibilidade -->
@@ -14,7 +14,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Conversor">
   <link rel="apple-touch-icon" href="icons/icon-512.png">
-
   <meta name="theme-color" content="#004aad">
   <meta name="background-color" content="#004aad">
   <meta name="description" content="PWA para converter e gerar ícones em múltiplos formatos e tamanhos. Criado por Nelson Ferreira do Nascimento Junior.">
@@ -75,6 +74,9 @@
 
     button:hover { background: var(--cor-primaria-hover); }
 
+    #clearBtn { background: #e11d48; }
+    #clearBtn:hover { background: #be123c; }
+
     img {
       margin-top: 1rem;
       max-width: 100%;
@@ -121,15 +123,6 @@
       border-color: var(--cor-primaria-hover);
     }
 
-    #clearBtn {
-      background: #e11d48;
-      margin-top: 0.5rem;
-    }
-
-    #clearBtn:hover {
-      background: #be123c;
-    }
-
     #info {
       font-size: 0.9rem;
       margin-top: 0.5rem;
@@ -167,6 +160,7 @@
 
     <button id="convertBtn">Converter e Baixar</button>
     <button id="generateAllBtn">Gerar Ícones PWA + Manifest (ZIP)</button>
+    <button id="showScreenshotsBtn">🖼️ Ver Screenshots do PWA</button>
     <button id="clearBtn">🧹 Limpar Imagem Atual</button>
 
     <div id="progress"><div id="progress-bar"></div></div>
@@ -187,6 +181,7 @@ const progress = document.getElementById("progress");
 const progressBar = document.getElementById("progress-bar");
 const clearBtn = document.getElementById("clearBtn");
 const info = document.getElementById("info");
+const showScreenshotsBtn = document.getElementById("showScreenshotsBtn");
 let currentImage = null, fileName = "";
 
 sizeSelect.addEventListener("change", () => {
@@ -207,8 +202,8 @@ function carregarImagem(src, nome = "imagem") {
       icon: "success",
       title: "Imagem carregada!",
       text: "Você pode converter ou gerar ícones agora.",
-      showConfirmButton: false,
-      timer: 1600
+      timer: 1600,
+      showConfirmButton: false
     });
   };
 }
@@ -260,84 +255,20 @@ clearBtn.addEventListener("click", () => {
   });
 });
 
-function gerarBase64(img, formato, largura, altura) {
-  const canvas = document.createElement("canvas");
-  canvas.width = largura;
-  canvas.height = altura;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0, largura, altura);
-  return canvas.toDataURL(formato);
-}
-
-document.getElementById("convertBtn").addEventListener("click", () => {
-  if (!currentImage) return Swal.fire("Erro", "Selecione ou arraste uma imagem primeiro!", "error");
-  let width = currentImage.width, height = currentImage.height;
-  if (sizeSelect.value !== "original") {
-    if (sizeSelect.value === "custom") {
-      width = parseInt(document.getElementById("customWidth").value) || width;
-      height = parseInt(document.getElementById("customHeight").value) || height;
-    } else width = height = parseInt(sizeSelect.value);
-  }
-  const base64 = gerarBase64(currentImage, format.value, width, height);
-  const a = document.createElement("a");
-  a.href = base64;
-  a.download = `icon-${width}.${format.value.split("/")[1]}`;
-  a.click();
-  Swal.fire("✅ Sucesso!", `Imagem convertida para ${width}x${height}px`, "success");
-});
-
-document.getElementById("generateAllBtn").addEventListener("click", async () => {
-  if (!currentImage) return Swal.fire("Erro", "Selecione ou arraste uma imagem primeiro!", "error");
-
-  const tamanhos = [48,72,96,128,144,152,192,256,384,512];
-  const formato = "image/png";
-  const zip = new JSZip();
-
-  progress.style.display = "block";
-  progressBar.style.width = "0%";
-
-  const pastaIcons = zip.folder("icons");
-  const manifestIcons = [];
-
-  for (let i = 0; i < tamanhos.length; i++) {
-    const tamanho = tamanhos[i];
-    const base64 = gerarBase64(currentImage, formato, tamanho, tamanho);
-    const base64Data = base64.split(',')[1];
-    const nome = `icon-${tamanho}.png`;
-    pastaIcons.file(nome, base64Data, {base64: true});
-    manifestIcons.push({
-      src: `icons/${nome}`,
-      sizes: `${tamanho}x${tamanho}`,
-      type: "image/png",
-      purpose: "any maskable"
-    });
-    progressBar.style.width = ((i + 1) / tamanhos.length) * 100 + "%";
-    await new Promise(r => setTimeout(r, 120));
-  }
-
-  const manifest = {
-    name: "Conversor de Imagens PWA",
-    short_name: "Conversor",
-    description: "PWA para converter e gerar ícones. Criado por Nelson Ferreira do Nascimento Junior.",
-    start_url: "./index.html",
-    display: "standalone",
-    background_color: "#004aad",
-    theme_color: "#004aad",
-    icons: manifestIcons,
-    author: "Nelson Ferreira do Nascimento Junior"
-  };
-
-  zip.file("manifest.webmanifest", JSON.stringify(manifest, null, 2));
-
-  zip.generateAsync({type:"blob"}).then(content => {
-    saveAs(content, "icones_pwa.zip");
-    progress.style.display = "none";
-    Swal.fire({
-      icon: "success",
-      title: "🎉 Ícones e manifest gerados!",
-      text: "O arquivo icones_pwa.zip foi baixado com sucesso.",
-      confirmButtonText: "OK"
-    });
+// 🖼️ Mostrar screenshots do PWA
+showScreenshotsBtn.addEventListener("click", () => {
+  Swal.fire({
+    title: "📱 Screenshots do PWA",
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:15px;">
+        <img src="screenshots/screen1.png" alt="Screenshot 1" style="max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+        <img src="screenshots/screen2.png" alt="Screenshot 2" style="max-width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      </div>
+    `,
+    confirmButtonText: "Fechar",
+    width: "90%",
+    background: "#fff",
+    color: "#1f2937"
   });
 });
 </script>
