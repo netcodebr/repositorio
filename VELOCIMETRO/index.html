@@ -5,34 +5,65 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Velocímetro PWA</title>
 
-<!-- 🔗 Manifest e tema -->
+<!-- Manifest e cor de tema -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0b1220">
 
-<!-- 🔘 Ícone -->
+<!-- Ícone -->
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 
+<!-- SweetAlert opcional -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <style>
-  body {
-    margin: 0;
-    display: grid;
-    place-items: center;
-    height: 100vh;
-    background: #0b1220;
-    color: #fff;
-    font-family: system-ui, sans-serif;
+  :root{
+    --bg:#0b1220;
+    --text:#e5e7eb;
+    --tick:#94a3b8;
+    --needle:#ff3b3b;
   }
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    display:grid;
+    place-items:center;
+    height:100vh;
+    font-family:system-ui,Segoe UI,Roboto,Inter,sans-serif;
   }
+  .wrap{display:grid;place-items:center;text-align:center}
+  svg{width:min(90vw,400px);height:auto;}
+  .readout{font-size:clamp(32px,6vw,72px);font-weight:800;margin-top:-40px;}
+  .unit{font-size:16px;color:#9ca3af;}
+  button{
+    margin-top:20px;
+    padding:10px 20px;
+    border:none;
+    border-radius:10px;
+    background:#0ea5e9;
+    color:#fff;
+    font-weight:700;
+    cursor:pointer;
+  }
+  button:hover{background:#0284c7}
 </style>
 </head>
 <body>
 
-<!-- carrega o velocímetro -->
-<iframe src="velocimetro.html" title="Velocímetro"></iframe>
+<div class="wrap">
+  <svg id="gsvg" viewBox="0 0 300 300">
+    <circle cx="150" cy="150" r="120" fill="transparent" stroke="#1e293b" stroke-width="6"/>
+    <g id="ticks"></g>
+    <g id="labels"></g>
+    <g id="needle" transform="rotate(-120 150 150)">
+      <path d="M150 150 L154 155 L150 30 L146 155 Z" fill="var(--needle)" />
+      <circle cx="150" cy="150" r="10" fill="var(--needle)"/>
+    </g>
+    <text id="digitalText" x="150" y="250" text-anchor="middle" font-size="26" font-weight="800" fill="var(--text)">0 km/h</text>
+  </svg>
+  <div class="readout"><span id="velVal">0</span><span class="unit"> km/h</span></div>
+  <button id="btnRand">Velocidade Aleatória</button>
+</div>
 
 <script>
 if ('serviceWorker' in navigator) {
@@ -40,6 +71,42 @@ if ('serviceWorker' in navigator) {
     .then(() => console.log('✅ Service Worker registrado'))
     .catch(err => console.error('SW erro:', err));
 }
+
+// ====== velocímetro animado ======
+const MIN=0,MAX=240,START=-120,END=120,EASE=0.1;
+const ticks=document.getElementById('ticks'),labels=document.getElementById('labels');
+const needle=document.getElementById('needle'),velVal=document.getElementById('velVal'),txt=document.getElementById('digitalText');
+function polar(cx,cy,r,a){a=(a-90)*Math.PI/180;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]}
+function angleFor(v){return START+(END-START)*((v-MIN)/(MAX-MIN))}
+for(let v=MIN;v<=MAX;v+=10){
+  const major=v%20===0;
+  const [x1,y1]=polar(150,150,120,angleFor(v)),[x2,y2]=polar(150,150,major?110:115,angleFor(v));
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('stroke','var(--tick)');l.setAttribute('stroke-width',major?2:1);
+  ticks.appendChild(l);
+  if(major){const [lx,ly]=polar(150,150,100,angleFor(v));
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',lx);t.setAttribute('y',ly+4);t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill','var(--tick)');t.textContent=v;labels.appendChild(t);}
+}
+
+let current=0,target=0;
+function animate(){
+  current+=(target-current)*EASE;
+  if(Math.abs(target-current)<0.05)current=target;
+  const ang=angleFor(current);
+  needle.setAttribute('transform',`rotate(${ang} 150 150)`);
+  const shown=Math.round(current);
+  velVal.textContent=shown;
+  txt.textContent=`${shown} km/h`;
+  requestAnimationFrame(animate);
+}
+animate();
+
+document.getElementById('btnRand').onclick=()=>{
+  target=Math.floor(Math.random()*MAX);
+};
 </script>
 
 </body>
