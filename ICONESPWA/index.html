@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conversor de Imagens PWA</title>
+
+<!-- 🧭 Manifest -->
+<link rel="manifest" href="manifest.webmanifest">
+
+<!-- 📱 Metadados e PWA -->
+<meta name="application-name" content="Conversor de Imagens PWA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Conversor">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#004aad">
+<meta name="background-color" content="#004aad">
+<meta name="description" content="PWA para converter e gerar ícones em múltiplos tamanhos. Desenvolvido por Nelson Ferreira do Nascimento Junior.">
+<meta name="author" content="Nelson Ferreira do Nascimento Junior">
+
+<link rel="apple-touch-icon" href="icons/icon-512.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+
+<!-- 📦 Bibliotecas -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+
+<style>
+:root {
+  --cor-primaria: #004aad;
+  --cor-primaria-hover: #003b8e;
+  --cor-fundo: #f5f7fa;
+  --cor-texto: #1f2937;
+  --cor-card: #ffffff;
+  --cor-erro: #dc2626;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cor-fundo: #0b1120;
+    --cor-texto: #e5e7eb;
+    --cor-card: #1e293b;
+  }
+}
+
+body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  text-align: center;
+  padding: 1rem;
+}
+
+h1 { color: var(--cor-primaria); margin-bottom: 1rem; }
+
+.card {
+  background: var(--cor-card);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-width: 440px;
+  width: 100%;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+button {
+  background: var(--cor-primaria);
+  color: #fff;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 600;
+}
+button:hover { background: var(--cor-primaria-hover); }
+
+#clearBtn { background: var(--cor-erro); }
+#clearBtn:hover { background: #b91c1c; }
+
+#installBtn { background: #16a34a; display: none; }
+#installBtn:hover { background: #15803d; }
+
+#dropZone {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  border: 2px dashed var(--cor-primaria);
+  border-radius: 10px;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: 0.3s;
+}
+#dropZone.hover {
+  background: #e0e7ff;
+  border-color: var(--cor-primaria-hover);
+}
+
+#progress {
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 8px;
+  height: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+  display: none;
+}
+#progress-bar {
+  height: 100%;
+  background: var(--cor-primaria);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+img {
+  margin-top: 1rem;
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+footer {
+  margin-top: 2rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+</style>
+</head>
+<body>
+<h1>Conversor e Gerador de Ícones PWA</h1>
+
+<div class="card">
+  <input type="file" id="upload" accept="image/*">
+  <div id="dropZone">🖼️ Arraste uma imagem aqui ou clique para selecionar</div>
+
+  <label for="format">Formato:</label>
+  <select id="format">
+    <option value="image/png">PNG</option>
+    <option value="image/jpeg">JPG</option>
+    <option value="image/webp">WEBP</option>
+  </select>
+
+  <label for="size">Tamanho:</label>
+  <select id="size">
+    <option value="original">Original</option>
+    <option value="192">192×192</option>
+    <option value="256">256×256</option>
+    <option value="512">512×512</option>
+    <option value="custom">Personalizado</option>
+  </select>
+
+  <div id="customSize" style="display:none;">
+    <input type="number" id="customWidth" placeholder="Largura (px)">
+    <input type="number" id="customHeight" placeholder="Altura (px)">
+  </div>
+
+  <button id="convertBtn">Converter e Baixar</button>
+  <button id="generateAllBtn">Gerar Ícones + Manifest + SW (ZIP)</button>
+  <button id="showScreenshotsBtn">🖼️ Ver Screenshots</button>
+  <button id="clearBtn">🧹 Limpar Imagem</button>
+  <button id="installBtn">📲 Instalar PWA</button>
+
+  <div id="progress"><div id="progress-bar"></div></div>
+  <div id="preview"></div>
+  <div id="info"></div>
+</div>
+
+<footer>🧑‍💻 Desenvolvido por <strong>Nelson Ferreira do Nascimento Junior</strong> — 2025</footer>
+
+<script defer>
+document.addEventListener("DOMContentLoaded", () => {
+const upload = document.getElementById("upload");
+const dropZone = document.getElementById("dropZone");
+const format = document.getElementById("format");
+const sizeSelect = document.getElementById("size");
+const customSizeDiv = document.getElementById("customSize");
+const preview = document.getElementById("preview");
+const progress = document.getElementById("progress");
+const progressBar = document.getElementById("progress-bar");
+const info = document.getElementById("info");
+const installBtn = document.getElementById("installBtn");
+let currentImage = null, fileName = "";
+let deferredPrompt;
+
+// Mostrar botão de instalação PWA
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installBtn.style.display = "block";
+});
+installBtn.addEventListener("click", () => {
+  installBtn.style.display = "none";
+  deferredPrompt.prompt();
+});
+
+// Registro do service worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+  .then(() => console.log("✅ Service Worker registrado"))
+  .catch(err => console.warn("SW erro:", err));
+}
+
+// Alternar campo customizado
+sizeSelect.addEventListener("change", () => {
+  customSizeDiv.style.display = sizeSelect.value === "custom" ? "block" : "none";
+});
+
+function carregarImagem(src, nome="imagem") {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = src;
+  img.onload = () => {
+    currentImage = img;
+    fileName = nome;
+    preview.innerHTML = "";
+    preview.appendChild(img);
+    info.textContent = `${nome} — ${img.width}x${img.height}px`;
+    Swal.fire({ icon: "success", title: "Imagem carregada!", timer: 1200, showConfirmButton: false });
+  };
+}
+
+// Upload e drag & drop
+upload.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (file) { const reader = new FileReader();
+    reader.onload = evt => carregarImagem(evt.target.result, file.name);
+    reader.readAsDataURL(file);
+  }
+});
+dropZone.addEventListener("click", () => upload.click());
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("hover"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("hover"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault(); dropZone.classList.remove("hover");
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = evt => carregarImagem(evt.target.result, file.name);
+    reader.readAsDataURL(file);
+  } else Swal.fire("Erro", "🚫 Tipo de arquivo não suportado.", "error");
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  if (!currentImage) return Swal.fire("Aviso", "Nenhuma imagem para limpar.", "warning");
+  currentImage = null; preview.innerHTML = ""; info.textContent = ""; upload.value = "";
+  Swal.fire({ icon: "info", title: "Imagem removida", timer: 1000, showConfirmButton: false });
+});
+
+function gerarBase64(img, formato, largura, altura) {
+  const canvas = document.createElement("canvas");
+  canvas.width = largura; canvas.height = altura;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, largura, altura);
+  return canvas.toDataURL(formato);
+}
+
+document.getElementById("convertBtn").addEventListener("click", () => {
+  if (!currentImage) return Swal.fire("Erro", "Selecione uma imagem primeiro!", "error");
+  let width = currentImage.width, height = currentImage.height;
+  if (sizeSelect.value !== "original") {
+    if (sizeSelect.value === "custom") {
+      width = parseInt(document.getElementById("customWidth").value);
+      height = parseInt(document.getElementById("customHeight").value);
+      if (!width || !height) return Swal.fire("Erro", "Informe largura e altura válidas.", "error");
+    } else width = height = parseInt(sizeSelect.value);
+  }
+  const base64 = gerarBase64(currentImage, format.value, width, height);
+  const a = document.createElement("a");
+  a.href = base64; a.download = `icon-${width}.${format.value.split("/")[1]}`; a.click();
+  Swal.fire("✅ Sucesso!", `Imagem ${width}x${height}px convertida!`, "success");
+});
+
+document.getElementById("generateAllBtn").addEventListener("click", async () => {
+  if (!currentImage) return Swal.fire("Erro", "Selecione uma imagem primeiro!", "error");
+  const tamanhos = [48,72,96,128,144,152,192,256,384,512];
+  const zip = new JSZip();
+  const pastaIcons = zip.folder("icons");
+  const manifestIcons = [];
+  const formato = "image/png";
+
+  progress.style.display = "block";
+  progressBar.style.width = "0%";
+
+  for (let i = 0; i < tamanhos.length; i++) {
+    const t = tamanhos[i];
+    const base64 = gerarBase64(currentImage, formato, t, t);
+    pastaIcons.file(`icon-${t}.png`, base64.split(',')[1], { base64: true });
+    manifestIcons.push({ src: `icons/icon-${t}.png`, sizes: `${t}x${t}`, type: "image/png", purpose: "any maskable" });
+    progressBar.style.width = `${((i+1)/tamanhos.length)*100}%`;
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  const manifest = {
+    name: "Conversor de Imagens PWA",
+    short_name: "Conversor",
+    description: "PWA para converter e gerar ícones.",
+    start_url: "./index.html",
+    display: "standalone",
+    orientation: "portrait",
+    id: "com.netcodebr.conversor",
+    scope: "./",
+    background_color: "#004aad",
+    theme_color: "#004aad",
+    categories: ["tools", "productivity"],
+    icons: manifestIcons,
+    screenshots: [
+      { src: "screenshots/screen1.png", sizes: "540x720", type: "image/png" },
+      { src: "screenshots/screen2.png", sizes: "540x720", type: "image/png" }
+    ],
+    shortcuts: [
+      { name: "Converter imagem", url: "./index.html", description: "Converter rapidamente" }
+    ],
+    author: "Nelson Ferreira do Nascimento Junior"
+  };
+
+  const sw = `
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open('pwa-cache').then(c => c.addAll(['./', './index.html'])));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});`;
+
+  zip.file("manifest.webmanifest", JSON.stringify(manifest, null, 2));
+  zip.file("service-worker.js", sw.trim());
+
+  const content = await zip.generateAsync({ type: "blob" });
+  saveAs(content, "icones_pwa.zip");
+  progress.style.display = "none";
+  Swal.fire("🎉 Concluído!", "O arquivo ZIP foi baixado com sucesso.", "success");
+});
+
+document.getElementById("showScreenshotsBtn").addEventListener("click", () => {
+  Swal.fire({
+    title: "📱 Screenshots do PWA",
+    html: `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:15px;">
+        <img src="screenshots/screen1.png" style="max-width:100%;border-radius:8px;">
+        <img src="screenshots/screen2.png" style="max-width:100%;border-radius:8px;">
+      </div>`,
+    confirmButtonText: "Fechar",
+    width: "90%",
+    background: "#fff",
+    color: "#1f2937"
+  });
+});
+});
+</script>
+</body>
+</html>
+
