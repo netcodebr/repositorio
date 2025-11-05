@@ -1,7 +1,7 @@
 :root {
   --cor1: #004aad;
   --cor2: #00aaff;
-  --fundo: #0a1128;
+  --bg: #0a1128;
   --card: #131c3a;
   --texto: #e2e8f0;
   --borda: #1f2a4f;
@@ -10,7 +10,7 @@
 
 body {
   margin: 0;
-  background: var(--fundo);
+  background: var(--bg);
   color: var(--texto);
   display: flex;
   flex-direction: column;
@@ -25,7 +25,10 @@ header {
   background: linear-gradient(90deg, var(--cor1), var(--cor2));
   color: #fff;
 }
-header .logo { width: 64px; border-radius: 12px; }
+header .logo {
+  width: 64px;
+  border-radius: 12px;
+}
 
 main {
   flex: 1;
@@ -51,6 +54,7 @@ input {
   background: #0f1737;
   color: var(--texto);
 }
+
 button {
   background: var(--cor1);
   color: #fff;
@@ -60,7 +64,16 @@ button {
   cursor: pointer;
   transition: background 0.3s;
 }
-button:hover { background: var(--cor2); }
+button:hover {
+  background: var(--cor2);
+}
+
+.botoes {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
 
 .resultado {
   background: var(--card);
@@ -71,7 +84,10 @@ button:hover { background: var(--cor2); }
   width: 100%;
   text-align: center;
 }
-.hidden { display: none; }
+
+.hidden {
+  display: none;
+}
 
 .preview {
   margin-top: 1.5rem;
@@ -81,6 +97,7 @@ button:hover { background: var(--cor2); }
   border-radius: 20px;
   box-shadow: 0 0 10px #0006;
 }
+
 footer {
   text-align: center;
   border-top: 1px solid var(--borda);
