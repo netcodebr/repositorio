@@ -7,6 +7,9 @@ const downloadLink = document.getElementById("downloadLink");
 const OWNER = "netcodebr";
 const REPO = "storage";
 
+// ✅ Token limitado para uso público (sem acesso total)
+const token = "ghp_xxxxxxxxxxxxxxxxxxx"; // ⚠️ use um token só com workflow scope (não admin)
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   apkLinkDiv.style.display = "none";
@@ -17,33 +20,35 @@ form.addEventListener("submit", async (e) => {
   const packageId = document.getElementById("packageId").value.trim();
 
   try {
-    // 🔹 Dispara o evento repository_dispatch
-    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/dispatches`, {
-      method: "POST",
-      headers: {
-        "Accept": "application/vnd.github+json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        event_type: "gerar_apk",
-        client_payload: {
-          pwa_url: pwaUrl,
-          app_name: appName,
-          package_id: packageId
-        }
-      })
-    });
+    // 🔹 Envia requisição para acionar o workflow trigger-workflow.yml
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/trigger-workflow.yml/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          ref: "main",
+          inputs: {
+            pwa_url: pwaUrl,
+            app_name: appName,
+            package_id: packageId
+          }
+        })
+      }
+    );
 
     if (!res.ok) {
       throw new Error(`Falha ao enviar evento (código ${res.status})`);
     }
 
-    atualizarStatus("🚀 Evento enviado! O build será iniciado no GitHub Actions.", 25);
+    atualizarStatus("🚀 Workflow iniciado! Aguardando compilação...", 25);
     await monitorarProgresso();
-
   } catch (error) {
     atualizarStatus(`❌ Erro: ${error.message}`, 0, true);
-    console.error(error);
   }
 });
 
@@ -54,7 +59,9 @@ async function monitorarProgresso() {
 
   for (let i = 0; i < 90; i++) {
     await esperar(4000);
-    const res = await fetch(runsUrl);
+    const res = await fetch(runsUrl, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
     const data = await res.json();
     const run = data.workflow_runs?.[0];
 
@@ -65,7 +72,9 @@ async function monitorarProgresso() {
 
     if (run && run.status === "completed") {
       if (run.conclusion === "success") {
-        const artifactsRes = await fetch(run.artifacts_url);
+        const artifactsRes = await fetch(run.artifacts_url, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         const artifactsData = await artifactsRes.json();
 
         if (artifactsData.total_count > 0) {
@@ -95,5 +104,5 @@ function atualizarStatus(mensagem, progresso, erro = false) {
 }
 
 function esperar(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
