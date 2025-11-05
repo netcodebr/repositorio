@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PWABuilder NetcodeBR</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#004aad" />
+</head>
+<body>
+  <header>
+    <img src="icons/icon-192.png" alt="logo" class="logo">
+    <div>
+      <h1>PWABuilder NetcodeBR</h1>
+      <p>Analise e gere seu app Android direto do navegador</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="input-area">
+      <input type="url" id="pwaUrl" placeholder="Cole a URL do seu PWA (ex: https://netcodebr.github.io/repositorio/)" />
+      <button id="analisarBtn">Analisar</button>
+    </div>
+
+    <section id="resultado" class="resultado hidden">
+      <div id="manifestoInfo"></div>
+      <div id="preview" class="preview hidden"></div>
+      <button id="gerarZipBtn" class="hidden">📦 Baixar Projeto Android (.zip)</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>🧱 PWABuilder NetcodeBR © 2025</p>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
