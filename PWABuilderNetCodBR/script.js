@@ -1,12 +1,13 @@
 const analisarBtn = document.getElementById("analisarBtn");
 const gerarZipBtn = document.getElementById("gerarZipBtn");
+const gitBtn = document.getElementById("gerarGitBtn");
 const info = document.getElementById("manifestoInfo");
 const preview = document.getElementById("preview");
 const resultado = document.getElementById("resultado");
 
 analisarBtn.addEventListener("click", async () => {
   const url = document.getElementById("pwaUrl").value.trim();
-  if (!url) return alert("Cole a URL do seu PWA primeiro.");
+  if (!url) return Swal.fire("⚠️ Informe a URL do PWA primeiro.");
 
   const manifestUrl = url.endsWith("/")
     ? url + "manifest.webmanifest"
@@ -44,7 +45,11 @@ analisarBtn.addEventListener("click", async () => {
     `;
 
     gerarZipBtn.classList.remove("hidden");
+    gitBtn.classList.remove("hidden");
+
     gerarZipBtn.onclick = () => gerarZip(url, manifest, iconSrc);
+    gitBtn.onclick = () => gerarViaGit(url, manifest);
+
   } catch (err) {
     info.innerHTML = `<p style="color:#f66;">❌ Erro: ${err.message}</p>`;
   }
@@ -90,4 +95,29 @@ Para compilar:
   link.href = URL.createObjectURL(blob);
   link.download = `${appName.replace(/\s+/g, "_")}_Android_Project.zip`;
   link.click();
+}
+
+// 🔧 Gerar via GitHub Actions
+function gerarViaGit(url, manifest) {
+  const appName = manifest.name || "MeuPWA";
+  const packageId = `br.com.netcodebr.${appName.toLowerCase().replace(/\s+/g, "")}`;
+  const workflowUrl = `https://github.com/netcodebr/repositorio/actions/workflows/build-apk.yml`;
+
+  Swal.fire({
+    title: "Gerar APK automático?",
+    html: `
+      <b>PWA:</b> ${url}<br>
+      <b>Nome:</b> ${appName}<br>
+      <b>Pacote:</b> ${packageId}<br><br>
+      O GitHub Actions será executado para gerar o APK (.apk e .aab).
+    `,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Sim, abrir GitHub",
+    cancelButtonText: "Cancelar",
+    background: "#0a1128",
+    color: "#e2e8f0"
+  }).then(result => {
+    if (result.isConfirmed) window.open(workflowUrl, "_blank");
+  });
 }
