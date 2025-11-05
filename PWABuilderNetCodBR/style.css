@@ -4,6 +4,8 @@
   --text: #e0e6f0;
   --accent: #00aaff;
   --btn: #004aad;
+  --success: #00ff99;
+  --error: #ff5555;
 }
 
 body {
@@ -74,8 +76,25 @@ button:hover {
   color: var(--accent);
 }
 
-.btn-download {
+.progress-bar {
+  width: 90%;
+  max-width: 500px;
+  height: 10px;
+  background: #2b3556;
+  margin: 1rem auto;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.progress {
+  width: 0%;
+  height: 100%;
   background: var(--accent);
+  transition: width 0.5s ease-in-out;
+}
+
+.btn-download {
+  background: var(--success);
   padding: 10px 20px;
   border-radius: 8px;
   color: #fff;
@@ -87,5 +106,5 @@ button:hover {
 }
 
 .btn-download:hover {
-  background: #33bbff;
+  background: #33ffbb;
 }
