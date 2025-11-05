@@ -4,41 +4,42 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PWABuilder NetcodeBR</title>
-  <meta name="theme-color" content="#004aad" />
-  <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
   <header>
-    <img src="icons/icon-192.png" alt="logo" class="logo">
-    <div>
-      <h1>PWABuilder NetcodeBR</h1>
-      <p>Gere seu app Android (.apk) diretamente do navegador</p>
-    </div>
+    <img src="icons/icon-192.png" class="logo" alt="Logo NetcodeBR" />
+    <h1>PWABuilder NetcodeBR</h1>
+    <p>Gere automaticamente um APK Android a partir do seu PWA hospedado!</p>
   </header>
 
   <main>
-    <div class="input-area">
-      <input type="url" id="pwaUrl" placeholder="Cole aqui a URL do seu PWA (https://...)" />
-      <button id="analisarBtn">Analisar</button>
-    </div>
+    <form id="apkForm">
+      <label>🌐 URL do seu PWA</label>
+      <input type="url" id="pwaUrl" placeholder="https://seuapp.github.io/" required />
 
-    <section id="resultado" class="resultado hidden">
-      <div id="manifestoInfo"></div>
-      <div id="preview" class="preview hidden"></div>
-      <div class="botoes">
-        <button id="gerarZipBtn" class="hidden">📦 Baixar Projeto Android (.zip)</button>
-        <button id="gerarGitBtn" class="hidden">⚙️ Gerar APK via GitHub Actions</button>
-      </div>
+      <label>📱 Nome do Aplicativo</label>
+      <input type="text" id="appName" placeholder="Ex: Meu App PWA" required />
+
+      <label>🧩 ID do Pacote (ex: br.com.netcodebr.app)</label>
+      <input type="text" id="packageId" placeholder="br.com.netcodebr.meupwa" required />
+
+      <button type="submit">🚀 Gerar APK</button>
+    </form>
+
+    <section id="status" class="status">
+      <p>Aguardando envio...</p>
     </section>
+
+    <div id="apkLink" class="apk-link" style="display:none;">
+      <a id="downloadLink" href="#" target="_blank" class="btn-download">⬇️ Baixar APK Gerado</a>
+    </div>
   </main>
 
   <footer>
-    <p>⚙️ PWABuilder NetcodeBR © 2025 — Desenvolvido por Nelson Ferreira</p>
+    <p>© 2025 NetcodeBR — Desenvolvido por Nelson Ferreira</p>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
