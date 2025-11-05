@@ -1,123 +1,91 @@
-const analisarBtn = document.getElementById("analisarBtn");
-const gerarZipBtn = document.getElementById("gerarZipBtn");
-const gitBtn = document.getElementById("gerarGitBtn");
-const info = document.getElementById("manifestoInfo");
-const preview = document.getElementById("preview");
-const resultado = document.getElementById("resultado");
+const form = document.getElementById("apkForm");
+const statusEl = document.getElementById("status");
+const apkLinkDiv = document.getElementById("apkLink");
+const downloadLink = document.getElementById("downloadLink");
 
-analisarBtn.addEventListener("click", async () => {
-  const url = document.getElementById("pwaUrl").value.trim();
-  if (!url) return Swal.fire("⚠️ Informe a URL do PWA primeiro.");
+// ⚠️ Coloque seu TOKEN com permissão `repo` e `workflow`
+const GITHUB_TOKEN = "GITHUB_TOKEN_AQUI";
+const OWNER = "netcodebr";
+const REPO = "storage";
+const WORKFLOW = "build-apk.yml";
 
-  const manifestUrl = url.endsWith("/")
-    ? url + "manifest.webmanifest"
-    : url + "/manifest.webmanifest";
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-  info.innerHTML = "🔍 Analisando manifesto...";
-  resultado.classList.remove("hidden");
+  apkLinkDiv.style.display = "none";
+  statusEl.innerHTML = "⏳ Enviando requisição ao GitHub Actions...";
+
+  const pwaUrl = document.getElementById("pwaUrl").value;
+  const appName = document.getElementById("appName").value;
+  const packageId = document.getElementById("packageId").value;
+
+  const payload = {
+    ref: "main",
+    inputs: {
+      pwa_url: pwaUrl,
+      app_name: appName,
+      package_id: packageId
+    }
+  };
 
   try {
-    const res = await fetch(manifestUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error("Manifesto não encontrado");
-    const manifest = await res.json();
+    // Dispara workflow
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${WORKFLOW}/dispatches`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+          Accept: "application/vnd.github+json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
-    const iconSrc = manifest.icons?.[0]?.src
-      ? new URL(manifest.icons[0].src, url).href
-      : `https://www.google.com/s2/favicons?domain=${url}`;
+    if (!res.ok) throw new Error("Falha ao iniciar o build");
 
-    info.innerHTML = `
-      <img src="${iconSrc}" width="72" height="72" alt="icon" style="border-radius:10px;">
-      <h2>${manifest.name || "Sem nome"}</h2>
-      <p>
-        <b>Start URL:</b> ${manifest.start_url || "/"}<br>
-        <b>Display:</b> ${manifest.display || "-"}<br>
-        <b>Theme:</b> ${manifest.theme_color || "-"}<br>
-        <b>Background:</b> ${manifest.background_color || "-"}
-      </p>
-    `;
+    statusEl.innerHTML = "🚀 Build iniciado! Aguardando término...";
 
-    preview.classList.remove("hidden");
-    preview.innerHTML = `
-      <h3>Prévia Android</h3>
-      <div class="mockup">
-        <img src="${iconSrc}" alt="preview" />
-      </div>
-    `;
-
-    gerarZipBtn.classList.remove("hidden");
-    gitBtn.classList.remove("hidden");
-
-    gerarZipBtn.onclick = () => gerarZip(url, manifest, iconSrc);
-    gitBtn.onclick = () => gerarViaGit(url, manifest);
-
+    // Aguarda execução
+    await esperarFinalizarBuild();
   } catch (err) {
-    info.innerHTML = `<p style="color:#f66;">❌ Erro: ${err.message}</p>`;
+    statusEl.innerHTML = "❌ Erro: " + err.message;
   }
 });
 
-async function gerarZip(url, manifest, iconUrl) {
-  const zip = new JSZip();
-  const appName = manifest.name || "MeuPWA";
-  const folder = zip.folder(appName.replace(/\s+/g, "_"));
+async function esperarFinalizarBuild() {
+  const runsUrl = `https://api.github.com/repos/${OWNER}/${REPO}/actions/runs?per_page=1`;
+  let apkUrl = null;
 
-  folder.file("README.txt", `
-# Projeto Android gerado automaticamente
-PWA: ${url}
+  statusEl.innerHTML = "⏳ Compilando APK no GitHub Actions... (pode levar até 3 minutos)";
 
-Para compilar:
-1. npm install -g @bubblewrap/cli
-2. bubblewrap init --manifest=${url}/manifest.webmanifest
-3. bubblewrap build
-`);
+  for (let i = 0; i < 60; i++) { // tenta por até ~3 minutos
+    await new Promise(r => setTimeout(r, 3000));
+    const res = await fetch(runsUrl, {
+      headers: { Authorization: `Bearer ${GITHUB_TOKEN}` },
+    });
+    const data = await res.json();
+    const run = data.workflow_runs?.[0];
 
-  folder.file("AndroidManifest.xml", `
-<manifest package="dev.${appName.toLowerCase().replace(/\s+/g, '')}"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:label="${appName}">
-        <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
-            android:exported="true">
-            <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL"
-                android:value="${url}" />
-        </activity>
-    </application>
-</manifest>
-  `);
+    if (run && run.status === "completed" && run.conclusion === "success") {
+      const artifactsUrl = run.artifacts_url;
+      const artifactsRes = await fetch(artifactsUrl, {
+        headers: { Authorization: `Bearer ${GITHUB_TOKEN}` },
+      });
+      const artifactsData = await artifactsRes.json();
 
-  try {
-    const imgBlob = await fetch(iconUrl).then(r => r.blob());
-    folder.file("icon.png", imgBlob);
-  } catch {
-    folder.file("icon.txt", "Ícone não pôde ser baixado automaticamente.");
+      if (artifactsData.total_count > 0) {
+        apkUrl = artifactsData.artifacts[0].archive_download_url;
+        break;
+      }
+    }
   }
 
-  const blob = await zip.generateAsync({ type: "blob" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `${appName.replace(/\s+/g, "_")}_Android_Project.zip`;
-  link.click();
-}
-
-// 🔧 Gerar via GitHub Actions
-function gerarViaGit(url, manifest) {
-  const appName = manifest.name || "MeuPWA";
-  const packageId = `br.com.netcodebr.${appName.toLowerCase().replace(/\s+/g, "")}`;
-  const workflowUrl = `https://github.com/netcodebr/repositorio/actions/workflows/build-apk.yml`;
-
-  Swal.fire({
-    title: "Gerar APK automático?",
-    html: `
-      <b>PWA:</b> ${url}<br>
-      <b>Nome:</b> ${appName}<br>
-      <b>Pacote:</b> ${packageId}<br><br>
-      O GitHub Actions será executado para gerar o APK (.apk e .aab).
-    `,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Sim, abrir GitHub",
-    cancelButtonText: "Cancelar",
-    background: "#0a1128",
-    color: "#e2e8f0"
-  }).then(result => {
-    if (result.isConfirmed) window.open(workflowUrl, "_blank");
-  });
+  if (apkUrl) {
+    statusEl.innerHTML = "✅ APK gerado com sucesso!";
+    downloadLink.href = apkUrl;
+    apkLinkDiv.style.display = "block";
+  } else {
+    statusEl.innerHTML = "⚠️ Não foi possível obter o link do APK. Verifique o GitHub Actions.";
+  }
 }
