@@ -1,22 +1,27 @@
 name: 🔐 Disparar build seguro do PWABuilder NetcodeBR
 
 on:
-  repository_dispatch:
-    types: [gerar_apk]
+  workflow_dispatch:  # 🔄 permite ser chamado manualmente OU via API autenticada
+    inputs:
+      pwa_url:
+        description: "URL do PWA"
+        required: true
+      app_name:
+        description: "Nome do aplicativo"
+        required: true
+      package_id:
+        description: "ID do pacote"
+        required: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 🚀 Disparar workflow de build-apk.yml
+      - name: 🚀 Chamar o build real
         run: |
-          echo "🔗 Recebido evento gerar_apk..."
-          echo "🌐 URL: ${{ github.event.client_payload.pwa_url }}"
-          echo "📱 App: ${{ github.event.client_payload.app_name }}"
-          echo "🧩 Package: ${{ github.event.client_payload.package_id }}"
-
+          echo "🔗 Executando trigger seguro..."
           curl -X POST \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.TOKEN_PWABUILDERNETCODBR }}" \
             https://api.github.com/repos/netcodebr/storage/actions/workflows/build-apk.yml/dispatches \
-            -d '{"ref":"main","inputs":{"pwa_url":"${{ github.event.client_payload.pwa_url }}","app_name":"${{ github.event.client_payload.app_name }}","package_id":"${{ github.event.client_payload.package_id }}"}}'
+            -d '{"ref":"main","inputs":{"pwa_url":"${{ github.event.inputs.pwa_url }}","app_name":"${{ github.event.inputs.app_name }}","package_id":"${{ github.event.inputs.package_id }}"}}'
