@@ -4,43 +4,42 @@ on:
   workflow_dispatch:
     inputs:
       pwa_url:
-        description: "URL do seu PWA"
+        description: "🌐 URL do seu PWA"
         required: true
+        default: "https://netcodebr.github.io/storage/"
       app_name:
-        description: "Nome do aplicativo"
+        description: "🧱 Nome do aplicativo"
         required: true
+        default: "Storage"
       package_id:
-        description: "ID do pacote (ex: br.com.netcodebr.pwabuilder)"
+        description: "📦 ID do pacote (ex: br.com.netcodebr.storage)"
         required: true
+        default: "br.com.netcodebr.storage"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 🧾 Clonar repositório
+        uses: actions/checkout@v4
 
-      - name: ☕ Configurar ambiente
-        uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
+      - name: ⚙️ Instalar dependências
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jdk
+          npm install -g @bubblewrap/cli
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - run: npm install -g @bubblewrap/cli@^1
-
-      - name: ⚙️ Gerar e compilar projeto
+      - name: 📦 Gerar APK automaticamente
         run: |
           mkdir -p android_build
           cd android_build
-          bubblewrap init --manifest="${{ github.event.inputs.pwa_url }}manifest.webmanifest" --packageId="${{ github.event.inputs.package_id }}" --name="${{ github.event.inputs.app_name }}" --skipPwaValidation
-          bubblewrap build || true
-          ./gradlew assembleDebug || true
-          ./gradlew bundleRelease || true
+          echo "🚀 Iniciando geração automática do APK..."
+          yes | bubblewrap init --manifest=${{ github.event.inputs.pwa_url }}/manifest.webmanifest --directory=. --skipPwaValidation
+          yes | bubblewrap build
+          cd ..
 
-      - uses: actions/upload-artifact@v4
+      - name: 📤 Upload do APK gerado
+        uses: actions/upload-artifact@v3
         with:
-          name: "${{ github.event.inputs.app_name }}_AndroidBuild"
-          path: android_build/app/build/outputs/**
+          name: ${{ github.event.inputs.app_name }}-APK
+          path: android_build/output/app-release-signed.apk
