@@ -1,0 +1,46 @@
+name: 📦 Gerar APK via PWABuilder NetcodeBR
+
+on:
+  workflow_dispatch:
+    inputs:
+      pwa_url:
+        description: "URL do seu PWA"
+        required: true
+      app_name:
+        description: "Nome do aplicativo"
+        required: true
+      package_id:
+        description: "ID do pacote (ex: br.com.netcodebr.pwabuilder)"
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: ☕ Configurar ambiente
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - run: npm install -g @bubblewrap/cli@^1
+
+      - name: ⚙️ Gerar e compilar projeto
+        run: |
+          mkdir -p android_build
+          cd android_build
+          bubblewrap init --manifest="${{ github.event.inputs.pwa_url }}manifest.webmanifest" --packageId="${{ github.event.inputs.package_id }}" --name="${{ github.event.inputs.app_name }}" --skipPwaValidation
+          bubblewrap build || true
+          ./gradlew assembleDebug || true
+          ./gradlew bundleRelease || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "${{ github.event.inputs.app_name }}_AndroidBuild"
+          path: android_build/app/build/outputs/**
