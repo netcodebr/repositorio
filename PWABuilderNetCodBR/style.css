@@ -1,107 +1,91 @@
 :root {
-  --cor1: #004aad;
-  --cor2: #00aaff;
-  --bg: #0a1128;
-  --card: #131c3a;
-  --texto: #e2e8f0;
-  --borda: #1f2a4f;
-  font-family: "Inter", "Segoe UI", sans-serif;
+  --bg: #0a0f1f;
+  --card: #1b2440;
+  --text: #e0e6f0;
+  --accent: #00aaff;
+  --btn: #004aad;
 }
 
 body {
-  margin: 0;
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
-  color: var(--texto);
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  color: var(--text);
+  margin: 0;
+  padding: 0;
+  text-align: center;
 }
 
 header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: linear-gradient(90deg, var(--cor1), var(--cor2));
+  padding: 2rem;
+  background: linear-gradient(90deg, #002a80, #004aad);
   color: #fff;
 }
-header .logo {
-  width: 64px;
-  border-radius: 12px;
-}
 
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-}
-
-.input-area {
-  display: flex;
-  gap: 1rem;
-  width: 100%;
-  max-width: 720px;
-  margin-bottom: 2rem;
-}
-
-input {
-  flex: 1;
-  padding: 0.8rem;
+.logo {
+  width: 72px;
   border-radius: 8px;
-  border: 1px solid var(--borda);
-  background: #0f1737;
-  color: var(--texto);
+}
+
+form {
+  background: var(--card);
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  margin: 2rem auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+form label {
+  display: block;
+  text-align: left;
+  margin: 1rem 0 0.3rem;
+  font-weight: 600;
+}
+
+form input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  font-size: 1rem;
 }
 
 button {
-  background: var(--cor1);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.8rem 1.2rem;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-button:hover {
-  background: var(--cor2);
-}
-
-.botoes {
-  display: flex;
-  justify-content: center;
-  gap: 0.6rem;
-  margin-top: 1rem;
-}
-
-.resultado {
-  background: var(--card);
-  border: 1px solid var(--borda);
-  border-radius: 10px;
-  padding: 1.5rem;
-  max-width: 720px;
-  width: 100%;
-  text-align: center;
-}
-
-.hidden {
-  display: none;
-}
-
-.preview {
   margin-top: 1.5rem;
-}
-.preview img {
-  width: 180px;
-  border-radius: 20px;
-  box-shadow: 0 0 10px #0006;
+  background: var(--btn);
+  border: none;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-footer {
-  text-align: center;
-  border-top: 1px solid var(--borda);
-  padding: 1rem;
-  font-size: 0.9rem;
-  color: #9aa;
+button:hover {
+  background: #0065d1;
+}
+
+.status {
+  margin-top: 2rem;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.btn-download {
+  background: var(--accent);
+  padding: 10px 20px;
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: 600;
+  margin-top: 20px;
+  transition: 0.3s;
+}
+
+.btn-download:hover {
+  background: #33bbff;
 }
