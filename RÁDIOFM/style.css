@@ -86,6 +86,7 @@ h1 {
   box-shadow: 0 0 15px rgba(0, 72, 173, 0.4);
   transition: 0.3s;
   position: relative;
+  border: none;
 }
 
 .botao:hover {
@@ -126,6 +127,7 @@ h1 {
   margin-top: 10px;
   font-size: 0.95em;
   color: var(--cor-neutra);
+  transition: color 0.3s, opacity 0.3s;
 }
 
 footer {
@@ -134,11 +136,14 @@ footer {
   color: #cbd5e1;
 }
 
-/* Estado “tocando” - ativa as ondas */
-.tocando .ondas span {
-  animation: pulso 0.9s ease-in-out infinite;
-}
+/* Estado “tocando” */
+.tocando .ondas span { animation: pulso 0.9s ease-in-out infinite; }
 .tocando .ondas span:nth-child(2) { animation-delay: 0.1s; }
 .tocando .ondas span:nth-child(3) { animation-delay: 0.2s; }
 .tocando .ondas span:nth-child(4) { animation-delay: 0.3s; }
 .tocando .ondas span:nth-child(5) { animation-delay: 0.4s; }
+
+@media (max-width: 400px) {
+  .logo { width: 64px; height: 64px; }
+  .botao { width: 70px; height: 70px; }
+}
