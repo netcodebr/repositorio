@@ -1,0 +1,17 @@
+{
+  "name": "Metropolitana FM",
+  "short_name": "Metropolitana",
+  "description": "Ouça ao vivo a Rádio Metropolitana FM 98.5 SP.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a1020",
+  "theme_color": "#004aad",
+  "icons": [
+    {
+      "src": "https://www.cxradio.com.br/img/Radio/Logo/98b3ed2f039f78d6c2f28b1a700233ef.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}

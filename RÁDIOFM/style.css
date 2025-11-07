@@ -1,0 +1,144 @@
+:root {
+  --cor-primaria: #004aad;
+  --cor-secundaria: #0077ff;
+  --cor-fundo: #0a1020;
+  --cor-texto: #f8fafc;
+  --cor-neutra: #94a3b8;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+  background: radial-gradient(circle at top, var(--cor-secundaria) 0%, var(--cor-fundo) 70%);
+  color: var(--cor-texto);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+.player-container {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.5);
+  padding: 30px 40px;
+  text-align: center;
+  max-width: 380px;
+  width: 90%;
+  animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: translateY(20px);}
+  to {opacity: 1; transform: translateY(0);}
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: white;
+  padding: 6px;
+  box-shadow: 0 0 8px var(--cor-primaria);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.4em;
+  color: #ffffff;
+}
+
+.freq {
+  margin: 4px 0 0;
+  color: var(--cor-neutra);
+  font-size: 0.9em;
+}
+
+.painel {
+  margin-top: 25px;
+}
+
+.musica {
+  font-size: 1em;
+  color: #e0e7ff;
+  margin-bottom: 15px;
+  min-height: 1.4em;
+}
+
+.botao {
+  background: linear-gradient(145deg, var(--cor-primaria), var(--cor-secundaria));
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(0, 72, 173, 0.4);
+  transition: 0.3s;
+  position: relative;
+}
+
+.botao:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 25px rgba(0, 72, 173, 0.7);
+}
+
+.botao svg {
+  width: 42px;
+  height: 42px;
+  fill: #fff;
+}
+
+.ondas {
+  position: relative;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.ondas span {
+  display: block;
+  width: 4px;
+  background: #00a2ff;
+  border-radius: 2px;
+  animation: none;
+}
+
+@keyframes pulso {
+  0%, 100% {height: 8px;}
+  50% {height: 24px;}
+}
+
+.estado {
+  margin-top: 10px;
+  font-size: 0.95em;
+  color: var(--cor-neutra);
+}
+
+footer {
+  margin-top: 25px;
+  font-size: 0.8em;
+  color: #cbd5e1;
+}
+
+/* Estado “tocando” - ativa as ondas */
+.tocando .ondas span {
+  animation: pulso 0.9s ease-in-out infinite;
+}
+.tocando .ondas span:nth-child(2) { animation-delay: 0.1s; }
+.tocando .ondas span:nth-child(3) { animation-delay: 0.2s; }
+.tocando .ondas span:nth-child(4) { animation-delay: 0.3s; }
+.tocando .ondas span:nth-child(5) { animation-delay: 0.4s; }
