@@ -6,6 +6,7 @@ const STREAMS = [
 
 const player = new Audio();
 player.preload = "none";
+player.crossOrigin = "anonymous";
 player.volume = 1.0;
 
 const btn = document.getElementById("btnPlayPause");
@@ -14,7 +15,7 @@ const iconPause = document.getElementById("iconPause");
 const estadoEl = document.getElementById("estado");
 const painel = document.querySelector(".painel");
 let tocando = false;
-let current = 0;
+let current = parseInt(localStorage.getItem("ultimoServidor")) || 0;
 
 async function tentarStream() {
   const url = STREAMS[current];
@@ -26,6 +27,8 @@ async function tentarStream() {
     iconPause.style.display = "inline";
     painel.classList.add("tocando");
     estadoEl.textContent = `✅ Conectado (Servidor ${current + 1})`;
+    document.title = "🎶 Tocando - Metropolitana FM 98.5";
+    localStorage.setItem("ultimoServidor", current);
   } catch {
     estadoEl.textContent = `⚠️ Falha no servidor ${current + 1}`;
     current = (current + 1) % STREAMS.length;
@@ -43,6 +46,7 @@ btn.onclick = () => {
     iconPause.style.display = "none";
     painel.classList.remove("tocando");
     estadoEl.textContent = "⏸️ Pausado";
+    document.title = "Metropolitana FM 98.5";
   }
 };
 
@@ -55,3 +59,11 @@ player.onerror = () => {
   current = (current + 1) % STREAMS.length;
   setTimeout(tentarStream, 3000);
 };
+
+window.addEventListener("offline", () => {
+  estadoEl.textContent = "📴 Sem internet";
+});
+window.addEventListener("online", () => {
+  estadoEl.textContent = "🔁 Reconectando...";
+  tentarStream();
+});
