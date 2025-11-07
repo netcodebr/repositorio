@@ -14,8 +14,13 @@ const iconPlay = document.getElementById("iconPlay");
 const iconPause = document.getElementById("iconPause");
 const estadoEl = document.getElementById("estado");
 const painel = document.querySelector(".painel");
+const volumeSlider = document.getElementById("volume");
 let tocando = false;
 let current = parseInt(localStorage.getItem("ultimoServidor")) || 0;
+
+volumeSlider.addEventListener("input", () => {
+  player.volume = parseFloat(volumeSlider.value);
+});
 
 async function tentarStream() {
   const url = STREAMS[current];
