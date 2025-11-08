@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Satélite Meteorologia — AO VIVO</title>
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -14,11 +13,10 @@
   body{background:#000;font-family:Inter,Segoe UI,Roboto,sans-serif;color:#fff;}
   .info{
     position:absolute;top:10px;left:10px;z-index:1000;
-    background:rgba(0,0,0,0.6);padding:10px 15px;border-radius:8px;
+    background:rgba(0,0,0,0.65);padding:10px 14px;border-radius:10px;
     font-size:14px;line-height:1.4;box-shadow:0 0 12px rgba(0,0,0,0.5);
-    backdrop-filter:blur(4px);
+    backdrop-filter:blur(5px);
   }
-  .info h1{font-size:16px;margin:0 0 6px 0;}
   .dot{display:inline-block;width:10px;height:10px;background:red;border-radius:50%;
     margin-right:6px;animation:pulse 1s infinite;}
   @keyframes pulse{
@@ -34,61 +32,62 @@
 
 <div class="info">
   <div><span class="dot"></span><strong>AO VIVO</strong> — Satélite Meteorológico</div>
-  <div>Fonte: NASA GIBS • GOES-16 GeoColor</div>
-  <div id="time">Atualizando...</div>
+  <div>Fonte: NASA GIBS — GOES-16 GeoColor + Infravermelho</div>
+  <div id="status">Atualizando...</div>
 </div>
 
 <script>
-// ==========================
-// MAPA BASE
-// ==========================
-const map = L.map('map', {
-  center:[-15.8,-47.9],
+const map = L.map('map',{
+  center:[-15,-55],
   zoom:4,
   zoomControl:false
 });
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19,
+  maxZoom:10,
   attribution:'© OpenStreetMap'
 }).addTo(map);
 
-// ==========================
-// CAMADA GOES-16 (NASA GIBS)
-// ==========================
-let goesLayer;
-
-function buildGIBSUrl(time){
-  // formato exigido pela API GIBS WMTS
-  return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/${time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`;
-}
-
-// gera timestamp ISO reduzido (última hora arredondada)
-function getRoundedTime(){
-  const now=new Date();
-  now.setUTCMinutes(0,0,0);           // arredonda pra hora cheia
+// ===============================
+// Funções auxiliares
+// ===============================
+function formatTimeForGIBS(){
+  // Arredonda para o último múltiplo de 10 minutos UTC
+  const now = new Date();
+  const mins = Math.floor(now.getUTCMinutes()/10)*10;
+  now.setUTCMinutes(mins,0,0);
   return now.toISOString().split('.')[0]+'Z';
 }
 
-function updateLayer(){
-  const time=getRoundedTime();
-  const url=buildGIBSUrl(time);
-
-  if(goesLayer) map.removeLayer(goesLayer);
-
-  goesLayer=L.tileLayer(url,{
-    maxZoom:8,
-    opacity:0.95,
-    attribution:'NASA GIBS / GOES-16'
-  }).addTo(map);
-
-  document.getElementById('time').textContent=
-    'Última atualização: '+new Date().toLocaleString('pt-BR');
+// ===============================
+// Cria camada GOES-16
+// ===============================
+function createGoesLayer(layerName,time,opacity){
+  return L.tileLayer(
+    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layerName}/default/${time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`,
+    {maxZoom:8,opacity,attribution:'NASA GIBS'}
+  );
 }
 
-// atualiza imediatamente e depois a cada minuto
-updateLayer();
-setInterval(updateLayer,60*1000);
+let visibleLayer, infraredLayer;
+
+function updateSatellite(){
+  const time = formatTimeForGIBS();
+  if(visibleLayer) map.removeLayer(visibleLayer);
+  if(infraredLayer) map.removeLayer(infraredLayer);
+
+  // GeoColor (visível)
+  visibleLayer = createGoesLayer('GOES-East_ABI_GeoColor',time,0.85).addTo(map);
+  // Infravermelho (nuvens + temperatura de topo)
+  infraredLayer = createGoesLayer('GOES-East_ABI_Band13_Clean_Infrared_10.3um',time,0.45).addTo(map);
+
+  document.getElementById('status').textContent =
+    'Última atualização: '+ new Date().toLocaleString('pt-BR');
+}
+
+// Atualiza continuamente (1 min)
+updateSatellite();
+setInterval(updateSatellite,60*1000);
 </script>
 
 </body>
