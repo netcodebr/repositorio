@@ -9,85 +9,130 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-  html,body,#map {height:100%;margin:0;}
-  body{background:#000;font-family:Inter,Segoe UI,Roboto,sans-serif;color:#fff;}
-  .info{
+  html,body,#map{height:100%;margin:0}
+  body{background:#000;font-family:Inter,Segoe UI,Roboto,sans-serif;color:#fff}
+  .hud{
     position:absolute;top:10px;left:10px;z-index:1000;
-    background:rgba(0,0,0,0.65);padding:10px 14px;border-radius:10px;
-    font-size:14px;line-height:1.4;box-shadow:0 0 12px rgba(0,0,0,0.5);
-    backdrop-filter:blur(5px);
+    background:rgba(0,0,0,.65);padding:10px 14px;border-radius:10px;
+    font-size:14px;line-height:1.45;box-shadow:0 0 12px rgba(0,0,0,.5);backdrop-filter:blur(5px)
   }
-  .dot{display:inline-block;width:10px;height:10px;background:red;border-radius:50%;
-    margin-right:6px;animation:pulse 1s infinite;}
-  @keyframes pulse{
-    0%{opacity:.3;transform:scale(.9);}
-    50%{opacity:1;transform:scale(1.3);}
-    100%{opacity:.3;transform:scale(.9);}
-  }
+  .dot{display:inline-block;width:10px;height:10px;background:#e11;border-radius:50%;margin-right:6px;animation:pulse 1s infinite}
+  @keyframes pulse{0%{opacity:.3;transform:scale(.9)}50%{opacity:1;transform:scale(1.3)}100%{opacity:.3;transform:scale(.9)}}
+  .status{opacity:.9}
 </style>
 </head>
 <body>
 
 <div id="map"></div>
 
-<div class="info">
+<div class="hud">
   <div><span class="dot"></span><strong>AO VIVO</strong> — Satélite Meteorológico</div>
-  <div>Fonte: NASA GIBS — GOES-16 GeoColor + Infravermelho</div>
-  <div id="status">Atualizando...</div>
+  <div>Fonte: NASA GIBS — GOES-16 GeoColor + IR (Band 13)</div>
+  <div id="status" class="status">Inicializando…</div>
 </div>
 
 <script>
-const map = L.map('map',{
-  center:[-15,-55],
-  zoom:4,
-  zoomControl:false
-});
-
+/* =========================
+   Mapa base
+========================= */
+const map = L.map('map', { center: [-15,-55], zoom: 4, zoomControl: false });
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:10,
-  attribution:'© OpenStreetMap'
+  maxZoom: 10, attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// ===============================
-// Funções auxiliares
-// ===============================
-function formatTimeForGIBS(){
-  // Arredonda para o último múltiplo de 10 minutos UTC
-  const now = new Date();
-  const mins = Math.floor(now.getUTCMinutes()/10)*10;
-  now.setUTCMinutes(mins,0,0);
-  return now.toISOString().split('.')[0]+'Z';
+/* =========================
+   Utilitários de tempo
+========================= */
+// arredonda para o último múltiplo de 10 minutos (UTC)
+function roundTo10UTC(date=new Date()){
+  const d = new Date(date);
+  d.setUTCMinutes(Math.floor(d.getUTCMinutes()/10)*10, 0, 0);
+  return d;
+}
+// gera uma lista de timestamps: 0, -10, -20 ... -120 min (ISO sem ms)
+function candidateTimes(){
+  const now = roundTo10UTC();
+  const list = [];
+  for(let i=0;i<=12;i++){ // 0..120 min
+    const d = new Date(now.getTime() - i*10*60*1000);
+    list.push(d.toISOString().split('.')[0]+'Z');
+  }
+  return list;
 }
 
-// ===============================
-// Cria camada GOES-16
-// ===============================
-function createGoesLayer(layerName,time,opacity){
-  return L.tileLayer(
-    `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layerName}/default/${time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`,
-    {maxZoom:8,opacity,attribution:'NASA GIBS'}
-  );
+/* =========================
+   Criação de camadas GIBS
+========================= */
+function gibsUrl(layer, timeISO){
+  return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${layer}/default/${timeISO}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`;
+}
+function createLayer(layer, timeISO, opacity){
+  return L.tileLayer(gibsUrl(layer, timeISO), {
+    maxZoom: 8, opacity, attribution: 'NASA GIBS', crossOrigin: true
+  });
 }
 
-let visibleLayer, infraredLayer;
+/* =========================
+   Lógica “AO VIVO” robusta
+========================= */
+let geoLayer = null;
+let irLayer  = null;
+const statusEl = document.getElementById('status');
 
-function updateSatellite(){
-  const time = formatTimeForGIBS();
-  if(visibleLayer) map.removeLayer(visibleLayer);
-  if(infraredLayer) map.removeLayer(infraredLayer);
+// tenta sequencialmente os últimos horários até algum tile carregar
+async function loadLatestAvailable(){
+  statusEl.textContent = 'Carregando último frame disponível…';
 
-  // GeoColor (visível)
-  visibleLayer = createGoesLayer('GOES-East_ABI_GeoColor',time,0.85).addTo(map);
-  // Infravermelho (nuvens + temperatura de topo)
-  infraredLayer = createGoesLayer('GOES-East_ABI_Band13_Clean_Infrared_10.3um',time,0.45).addTo(map);
+  const times = candidateTimes();
 
-  document.getElementById('status').textContent =
-    'Última atualização: '+ new Date().toLocaleString('pt-BR');
+  for (const t of times){
+    const ok = await tryTime(t);
+    if(ok){
+      statusEl.textContent = 'Ao vivo — frame: ' + new Date(t).toLocaleString('pt-BR');
+      return true;
+    }
+  }
+  statusEl.textContent = 'Sem dados recentes (tente novamente em alguns minutos).';
+  return false;
 }
 
-// Atualiza continuamente (1 min)
-updateSatellite();
-setInterval(updateSatellite,60*1000);
+// cria camadas com um timestamp e resolve quando pelo menos UM tile carregou
+function tryTime(timeISO){
+  return new Promise(resolve=>{
+    // remove camadas anteriores
+    if(geoLayer) map.removeLayer(geoLayer);
+    if(irLayer)  map.removeLayer(irLayer);
+
+    // cria novas
+    geoLayer = createLayer('GOES-East_ABI_GeoColor', timeISO, 0.88);
+    irLayer  = createLayer('GOES-East_ABI_Band13_Clean_Infrared_10.3um', timeISO, 0.42);
+
+    let loaded = false;
+    const onFirstTile = () => { if(!loaded){ loaded = true; cleanup(); resolve(true); } };
+    const onErrorCount = () => { /* sem ação: Leaflet chamará 'load' se algum tile vier */ };
+
+    function cleanup(){
+      geoLayer.off('tileload', onFirstTile).off('tileerror', onErrorCount);
+      irLayer.off('tileload', onFirstTile).off('tileerror', onErrorCount);
+    }
+
+    geoLayer.on('tileload', onFirstTile).on('tileerror', onErrorCount);
+    irLayer .on('tileload', onFirstTile).on('tileerror', onErrorCount);
+
+    geoLayer.addTo(map);
+    irLayer .addTo(map);
+
+    // timeout de segurança (se nada carregar em 6s, considera falha e tenta o horário anterior)
+    setTimeout(()=>{ if(!loaded){ cleanup(); resolve(false); } }, 6000);
+  });
+}
+
+// ciclo de atualização contínua (1 min)
+async function updateLive(){
+  await loadLatestAvailable();
+}
+updateLive();
+setInterval(updateLive, 60*1000);
 </script>
 
 </body>
