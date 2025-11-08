@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Satélite Meteorologia — AO VIVO</title>
 
 <!-- Leaflet -->
@@ -10,33 +10,21 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-  html,body,#map { height:100%; margin:0; }
-  body {
-    background:#000;
-    font-family: Inter,Segoe UI,Roboto,sans-serif;
-    color:white;
+  html,body,#map {height:100%;margin:0;}
+  body{background:#000;font-family:Inter,Segoe UI,Roboto,sans-serif;color:#fff;}
+  .info{
+    position:absolute;top:10px;left:10px;z-index:1000;
+    background:rgba(0,0,0,0.6);padding:10px 15px;border-radius:8px;
+    font-size:14px;line-height:1.4;box-shadow:0 0 12px rgba(0,0,0,0.5);
+    backdrop-filter:blur(4px);
   }
-  .info {
-    position:absolute;
-    top:10px; left:10px;
-    background:rgba(0,0,0,0.6);
-    padding:10px 15px;
-    border-radius:8px;
-    font-size:14px;
-    line-height:1.4;
-    box-shadow:0 0 15px rgba(0,0,0,0.3);
-    z-index:1000;
-  }
-  .info h1 { font-size:16px; margin:0 0 6px 0; }
-  .info .dot {
-    display:inline-block; width:10px; height:10px;
-    background:red; border-radius:50%;
-    margin-right:5px; animation:pulse 1s infinite;
-  }
-  @keyframes pulse {
-    0% { opacity:0.2; transform:scale(0.9); }
-    50% { opacity:1; transform:scale(1.3); }
-    100% { opacity:0.2; transform:scale(0.9); }
+  .info h1{font-size:16px;margin:0 0 6px 0;}
+  .dot{display:inline-block;width:10px;height:10px;background:red;border-radius:50%;
+    margin-right:6px;animation:pulse 1s infinite;}
+  @keyframes pulse{
+    0%{opacity:.3;transform:scale(.9);}
+    50%{opacity:1;transform:scale(1.3);}
+    100%{opacity:.3;transform:scale(.9);}
   }
 </style>
 </head>
@@ -46,74 +34,61 @@
 
 <div class="info">
   <div><span class="dot"></span><strong>AO VIVO</strong> — Satélite Meteorológico</div>
-  <div id="camada">Camada: Nuvens + Precipitação + Temperatura</div>
-  <div id="atualizacao">Atualizando...</div>
+  <div>Fonte: NASA GIBS • GOES-16 GeoColor</div>
+  <div id="time">Atualizando...</div>
 </div>
 
 <script>
 // ==========================
-// CONFIGURAÇÃO DO MAPA
+// MAPA BASE
 // ==========================
 const map = L.map('map', {
-  center: [-15.8, -47.9], // Brasil
-  zoom: 4,
-  zoomControl: false
+  center:[-15.8,-47.9],
+  zoom:4,
+  zoomControl:false
 });
 
-// Base map (OpenStreetMap)
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 19,
-  attribution: '© OpenStreetMap'
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,
+  attribution:'© OpenStreetMap'
 }).addTo(map);
 
 // ==========================
-// CAMADAS DE CLIMA AO VIVO
+// CAMADA GOES-16 (NASA GIBS)
 // ==========================
+let goesLayer;
 
-// NASA GIBS — Nuvens (True Color, GOES-East)
-const gibsLayer = L.tileLayer(
-  'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/{time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg',
-  { opacity: 0.8, attribution: 'NASA GIBS' }
-);
-
-// OpenWeatherMap — Precipitação e Temperatura (públicos, sem key)
-const precipitation = L.tileLayer(
-  'https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=',
-  { opacity: 0.6, attribution: 'OpenWeatherMap' }
-);
-const temperature = L.tileLayer(
-  'https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=',
-  { opacity: 0.4, attribution: '' }
-);
-
-// ==========================
-// FUNÇÃO DE ATUALIZAÇÃO AO VIVO
-// ==========================
-function getISOTime() {
-  const now = new Date();
-  return now.toISOString().split('.')[0] + 'Z';
+function buildGIBSUrl(time){
+  // formato exigido pela API GIBS WMTS
+  return `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/${time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`;
 }
 
-function atualizarCamadas() {
-  const time = getISOTime();
-  // Atualiza o parâmetro {time} da camada GIBS (NASA)
-  const url = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/${time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`;
-
-  gibsLayer.setUrl(url);
-  document.getElementById('atualizacao').innerText =
-    "Última atualização: " + new Date().toLocaleString("pt-BR");
+// gera timestamp ISO reduzido (última hora arredondada)
+function getRoundedTime(){
+  const now=new Date();
+  now.setUTCMinutes(0,0,0);           // arredonda pra hora cheia
+  return now.toISOString().split('.')[0]+'Z';
 }
 
-// ==========================
-// INICIALIZAÇÃO
-// ==========================
-gibsLayer.addTo(map);
-precipitation.addTo(map);
-temperature.addTo(map);
+function updateLayer(){
+  const time=getRoundedTime();
+  const url=buildGIBSUrl(time);
 
-// Atualiza continuamente a cada 60 segundos
-setInterval(atualizarCamadas, 60000);
-atualizarCamadas(); // primeira atualização imediata
+  if(goesLayer) map.removeLayer(goesLayer);
+
+  goesLayer=L.tileLayer(url,{
+    maxZoom:8,
+    opacity:0.95,
+    attribution:'NASA GIBS / GOES-16'
+  }).addTo(map);
+
+  document.getElementById('time').textContent=
+    'Última atualização: '+new Date().toLocaleString('pt-BR');
+}
+
+// atualiza imediatamente e depois a cada minuto
+updateLayer();
+setInterval(updateLayer,60*1000);
 </script>
 
 </body>
