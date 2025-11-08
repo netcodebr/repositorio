@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Satélite Meteorologia — AO VIVO</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+  html,body,#map { height:100%; margin:0; }
+  body {
+    background:#000;
+    font-family: Inter,Segoe UI,Roboto,sans-serif;
+    color:white;
+  }
+  .info {
+    position:absolute;
+    top:10px; left:10px;
+    background:rgba(0,0,0,0.6);
+    padding:10px 15px;
+    border-radius:8px;
+    font-size:14px;
+    line-height:1.4;
+    box-shadow:0 0 15px rgba(0,0,0,0.3);
+    z-index:1000;
+  }
+  .info h1 { font-size:16px; margin:0 0 6px 0; }
+  .info .dot {
+    display:inline-block; width:10px; height:10px;
+    background:red; border-radius:50%;
+    margin-right:5px; animation:pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0% { opacity:0.2; transform:scale(0.9); }
+    50% { opacity:1; transform:scale(1.3); }
+    100% { opacity:0.2; transform:scale(0.9); }
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="info">
+  <div><span class="dot"></span><strong>AO VIVO</strong> — Satélite Meteorológico</div>
+  <div id="camada">Camada: Nuvens + Precipitação + Temperatura</div>
+  <div id="atualizacao">Atualizando...</div>
+</div>
+
+<script>
+// ==========================
+// CONFIGURAÇÃO DO MAPA
+// ==========================
+const map = L.map('map', {
+  center: [-15.8, -47.9], // Brasil
+  zoom: 4,
+  zoomControl: false
+});
+
+// Base map (OpenStreetMap)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
+
+// ==========================
+// CAMADAS DE CLIMA AO VIVO
+// ==========================
+
+// NASA GIBS — Nuvens (True Color, GOES-East)
+const gibsLayer = L.tileLayer(
+  'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/{time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg',
+  { opacity: 0.8, attribution: 'NASA GIBS' }
+);
+
+// OpenWeatherMap — Precipitação e Temperatura (públicos, sem key)
+const precipitation = L.tileLayer(
+  'https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=',
+  { opacity: 0.6, attribution: 'OpenWeatherMap' }
+);
+const temperature = L.tileLayer(
+  'https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=',
+  { opacity: 0.4, attribution: '' }
+);
+
+// ==========================
+// FUNÇÃO DE ATUALIZAÇÃO AO VIVO
+// ==========================
+function getISOTime() {
+  const now = new Date();
+  return now.toISOString().split('.')[0] + 'Z';
+}
+
+function atualizarCamadas() {
+  const time = getISOTime();
+  // Atualiza o parâmetro {time} da camada GIBS (NASA)
+  const url = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/GOES-East_ABI_GeoColor/default/${time}/GoogleMapsCompatible_Level{z}/{z}/{y}/{x}.jpg`;
+
+  gibsLayer.setUrl(url);
+  document.getElementById('atualizacao').innerText =
+    "Última atualização: " + new Date().toLocaleString("pt-BR");
+}
+
+// ==========================
+// INICIALIZAÇÃO
+// ==========================
+gibsLayer.addTo(map);
+precipitation.addTo(map);
+temperature.addTo(map);
+
+// Atualiza continuamente a cada 60 segundos
+setInterval(atualizarCamadas, 60000);
+atualizarCamadas(); // primeira atualização imediata
+</script>
+
+</body>
+</html>
