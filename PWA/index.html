@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gerador Automático de PWA (Ctrl+A)</title>
 <link rel="icon" type="image/png" href="https://firebase.google.com/images/icons/firebase_studio.png">
-
 <style>
 body {
   font-family: "Inter", sans-serif;
@@ -89,12 +88,14 @@ select {
 </select>
 
 <div style="margin-top: 10px;">
-  <button onclick="gerar()">Gerar Arquivos 🔥</button>
+  <button id="btnGerar">Gerar Arquivos 🔥</button>
 </div>
 
 <div id="output" class="output"></div>
 
 <script>
+document.getElementById("btnGerar").addEventListener("click", gerar);
+
 function gerar() {
   const html = document.getElementById("htmlInput").value;
   const estrategia = document.getElementById("estrategia").value;
@@ -106,141 +107,88 @@ function gerar() {
     return;
   }
 
-  // Parser temporário
   const doc = new DOMParser().parseFromString(html, "text/html");
-
   const titulo = doc.title || "Meu App PWA";
   const descricao = doc.querySelector('meta[name="description"]')?.content || "Aplicativo PWA";
   const corTema = doc.querySelector('meta[name="theme-color"]')?.content || "#004aad";
   const corFundo = doc.querySelector('meta[name="background-color"]')?.content || corTema;
-  const favicon = doc.querySelector('link[rel*="icon"]')?.href || "icons/icon-192.png";
+  const favicon = doc.querySelector('link[rel*=\"icon\"]')?.href || "icons/icon-192.png";
   const lang = doc.documentElement.lang || "pt-BR";
-
   const versao = new Date().toISOString().replace(/\D/g, "").slice(0, 12);
 
   // Manifest
-  const manifest = `{
-  "name": "${titulo}",
-  "short_name": "${titulo.slice(0, 12)}",
-  "description": "${descricao}",
-  "lang": "${lang}",
-  "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "${corFundo}",
-  "theme_color": "${corTema}",
-  "orientation": "any",
-  "icons": [
-    { "src": "icons/icon-48.png", "sizes": "48x48", "type": "image/png" },
-    { "src": "icons/icon-72.png", "sizes": "72x72", "type": "image/png" },
-    { "src": "icons/icon-96.png", "sizes": "96x96", "type": "image/png" },
-    { "src": "icons/icon-144.png", "sizes": "144x144", "type": "image/png" },
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-256.png", "sizes": "256x256", "type": "image/png" },
-    { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ]
-}`;
+  const manifest =
+    "{\\n" +
+    "  \\\"name\\\": \\\"" + titulo + "\\\",\\n" +
+    "  \\\"short_name\\\": \\\"" + titulo.slice(0, 12) + "\\\",\\n" +
+    "  \\\"description\\\": \\\"" + descricao + "\\\",\\n" +
+    "  \\\"lang\\\": \\\"" + lang + "\\\",\\n" +
+    "  \\\"start_url\\\": \\\"./index.html\\\",\\n" +
+    "  \\\"display\\\": \\\"standalone\\\",\\n" +
+    "  \\\"background_color\\\": \\\"" + corFundo + "\\\",\\n" +
+    "  \\\"theme_color\\\": \\\"" + corTema + "\\\",\\n" +
+    "  \\\"orientation\\\": \\\"any\\\",\\n" +
+    "  \\\"icons\\\": [\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-48.png\\\", \\\"sizes\\\": \\\"48x48\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-72.png\\\", \\\"sizes\\\": \\\"72x72\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-96.png\\\", \\\"sizes\\\": \\\"96x96\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-144.png\\\", \\\"sizes\\\": \\\"144x144\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-192.png\\\", \\\"sizes\\\": \\\"192x192\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-256.png\\\", \\\"sizes\\\": \\\"256x256\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-384.png\\\", \\\"sizes\\\": \\\"384x384\\\", \\\"type\\\": \\\"image/png\\\" },\\n" +
+    "    { \\\"src\\\": \\\"icons/icon-512.png\\\", \\\"sizes\\\": \\\"512x512\\\", \\\"type\\\": \\\"image/png\\\" }\\n" +
+    "  ]\\n" +
+    "}";
 
   // Service Worker
-  const sw = `/* service-worker.js — Gerado automaticamente
-   Estratégia: ${estrategia} | Versão: ${versao} */
-const VERSION = '${versao}';
-const CACHE_NAME = 'pwa-cache-' + VERSION;
-const CORE = ['./', './index.html', './manifest.webmanifest'];
+  const sw =
+    "/* service-worker.js — Gerado automaticamente */\\n" +
+    "const VERSION = '" + versao + "';\\n" +
+    "const CACHE_NAME = 'pwa-cache-' + VERSION;\\n" +
+    "const CORE = ['./', './index.html', './manifest.webmanifest'];\\n\\n" +
+    "self.addEventListener('install', e => {\\n" +
+    "  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));\\n" +
+    "});\\n\\n" +
+    "self.addEventListener('activate', e => {\\n" +
+    "  e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))));\\n" +
+    "  self.clients.claim();\\n" +
+    "});\\n\\n" +
+    "self.addEventListener('fetch', e => {\\n" +
+    "  const req = e.request;\\n" +
+    "  if (!req.url.startsWith(self.location.origin)) return;\\n" +
+    (estrategia === "network-first"
+      ? "  e.respondWith(fetch(req).then(res => { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, clone)); return res; }).catch(() => caches.match(req)));\\n"
+      : "  e.respondWith(caches.match(req).then(cached => cached || fetch(req).then(res => { const clone = res.clone(); caches.open(CACHE_NAME).then(c => c.put(req, clone)); return res; })));\\n") +
+    "});\\n\\n" +
+    "self.addEventListener('message', e => { if (e.data === 'SKIP_WAITING') self.skipWaiting(); });";
 
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
-});
-self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)))));
-  self.clients.claim();
-});
-self.addEventListener('fetch', e => {
-  const req = e.request;
-  if (!req.url.startsWith(self.location.origin)) return;
-  if (${estrategia === "network-first" ? "true" : "false"}) {
-    e.respondWith(fetch(req).then(res => {
-      const clone = res.clone();
-      caches.open(CACHE_NAME).then(c => c.put(req, clone));
-      return res;
-    }).catch(() => caches.match(req)));
-  } else {
-    e.respondWith(caches.match(req).then(cached => cached || fetch(req).then(res => {
-      const clone = res.clone();
-      caches.open(CACHE_NAME).then(c => c.put(req, clone));
-      return res;
-    })));
-  }
-});
-self.addEventListener('message', e => {
-  if (e.data === 'SKIP_WAITING') self.skipWaiting();
-});`;
+  // Index
+  const index =
+    "<!DOCTYPE html>\\n<html lang='" + lang + "'>\\n<head>\\n" +
+    "<meta charset='UTF-8'>\\n<meta name='viewport' content='width=device-width,initial-scale=1'>\\n" +
+    "<title>" + titulo + "</title>\\n" +
+    "<meta name='theme-color' content='" + corTema + "'>\\n" +
+    "<meta name='background-color' content='" + corFundo + "'>\\n" +
+    "<meta name='description' content='" + descricao + "'>\\n" +
+    "<link rel='icon' href='" + favicon + "'>\\n" +
+    "<link rel='manifest' href='manifest.webmanifest'>\\n" +
+    "<link rel='apple-touch-icon' href='icons/icon-192.png'>\\n" +
+    "<meta name='apple-mobile-web-app-capable' content='yes'>\\n" +
+    "<meta name='apple-mobile-web-app-status-bar-style' content='default'>\\n" +
+    "<meta name='apple-mobile-web-app-title' content='" + titulo + "'>\\n</head>\\n<body>\\n" +
+    "<h1>" + titulo + "</h1>\\n<p>" + descricao + "</p>\\n<p>Versão: " + versao + "</p>\\n" +
+    "<div id='updateBanner' style='display:none;padding:10px;border:1px solid #274063;background:#10213a;color:#fff;border-radius:8px;margin:20px;'>Nova versão disponível! " +
+    "<button onclick='atualizarAgora()' style='background:#004aad;color:white;padding:6px 12px;border:none;border-radius:4px;'>Atualizar agora</button></div>\\n" +
+    "<script>\\nif ('serviceWorker' in navigator) {\\n navigator.serviceWorker.register('service-worker.js').then(reg => {\\n  reg.addEventListener('updatefound', () => {\\n   const newWorker = reg.installing;\\n   newWorker.addEventListener('statechange', () => {\\n    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {\\n     document.getElementById('updateBanner').style.display = 'block';\\n    }\\n   });\\n  });\\n });\\n}\\nfunction atualizarAgora(){navigator.serviceWorker.getRegistration().then(r=>{if(r&&r.waiting)r.waiting.postMessage('SKIP_WAITING');});location.reload();}\\n</script>\\n</body>\\n</html>";
 
-  // Index modificado
-  const index = `<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${titulo}</title>
-<meta name="theme-color" content="${corTema}">
-<meta name="background-color" content="${corFundo}">
-<meta name="description" content="${descricao}">
-<link rel="icon" href="${favicon}">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="${titulo}">
-</head>
-<body>
-<h1>${titulo}</h1>
-<p>${descricao}</p>
-<p>Versão: ${versao}</p>
-
-<div id="updateBanner" style="display:none;padding:10px;border:1px solid #274063;background:#10213a;color:#fff;border-radius:8px;margin:20px;">
-  Nova versão disponível! <button onclick="atualizarAgora()" style="background:#004aad;color:white;padding:6px 12px;border:none;border-radius:4px;">Atualizar agora</button>
-</div>
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js').then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const newWorker = reg.installing;
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          document.getElementById('updateBanner').style.display = 'block';
-        }
-      });
-    });
-  });
-}
-function atualizarAgora() {
-  navigator.serviceWorker.getRegistration().then(r => {
-    if (r && r.waiting) r.waiting.postMessage('SKIP_WAITING');
-  });
-  location.reload();
+  // Saída
+  saida.innerHTML =
+    "<h2>✅ Arquivos gerados automaticamente</h2>" +
+    "<h3>📄 manifest.webmanifest</h3><pre>" + manifest + "</pre>" +
+    "<h3>📄 service-worker.js</h3><pre>" + sw + "</pre>" +
+    "<h3>📄 index.html (modificado)</h3><pre>" + index + "</pre>" +
+    "<p>💡 Coloque seus ícones em <code>icons/</code> com tamanhos 48→512 e copie esses arquivos para seu projeto.</p>";
 }
 </script>
-</body>
-</html>`;
-
-  saida.innerHTML = `
-    <h2>✅ Arquivos gerados automaticamente</h2>
-
-    <h3>📄 manifest.webmanifest</h3>
-    <pre>${manifest}</pre>
-
-    <h3>📄 service-worker.js</h3>
-    <pre>${sw}</pre>
-
-    <h3>📄 index.html (modificado)</h3>
-    <pre>${index}</pre>
-
-    <p>💡 Coloque seus ícones em <code>icons/</code> com tamanhos 48→512 e copie esses arquivos para seu projeto.</p>
-  `;
-}
-</script>
-
 </body>
 </html>
