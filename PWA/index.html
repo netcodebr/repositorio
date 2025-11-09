@@ -2,163 +2,73 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-<title>Gerador Automático de PWA (Ctrl+A)</title>
-<link rel="icon" type="image/png" href="https://firebase.google.com/images/icons/firebase_studio.png">
-
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gerador Automático de PWA (baseado no HTML colado)</title>
+<link rel="icon" href="https://firebase.google.com/images/icons/firebase_studio.png" />
 <style>
-  :root {
-    --bg: #0b1120;
-    --card: #101a2b;
-    --muted: #94a3b8;
-    --text: #e2e8f0;
-    --accent: #00aaff;
-    --primary: #004aad;
-    --primary-2: #003b8e;
-    --ok: #16a34a;
-    --warn: #f59e0b;
+  :root{
+    --bg:#0b1120; --card:#101a2b; --muted:#94a3b8; --text:#e2e8f0;
+    --accent:#00aaff; --primary:#004aad; --primary-2:#003b8e;
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; padding:20px;
-    font-family:"Inter",system-ui,Segoe UI,Roboto,Arial,sans-serif;
-    color:var(--text); background:var(--bg);
-  }
-  header h1{
-    color:var(--accent); text-align:center; margin:0 0 8px;
-    display:flex; align-items:center; justify-content:center; gap:10px;
-  }
-  header h1 img{ width:36px; height:36px }
-  header p{ text-align:center; color:var(--muted); margin:0 0 18px }
-  .grid{
-    display:grid; gap:16px; grid-template-columns: 1fr;
-    max-width:1100px; margin:0 auto;
-  }
-  .card{
-    background:var(--card); border-radius:12px; padding:16px; border:1px solid #0f1b2f;
-  }
-  .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px }
-  .row-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px }
-  label{ font-size:14px; color:#cbd5e1; display:block; margin:0 0 6px }
-  input, select, textarea, button{
-    width:100%; padding:10px 12px; border-radius:8px; border:1px solid #1e293b;
-    font-size:14px; background:#0e1726; color:#e2e8f0; outline:none;
-  }
-  textarea{ resize:vertical; min-height:80px }
-  input[type="color"]{ padding:0; height:42px }
-  .help{ color:#9fb3c8; font-size:12px; margin-top:6px }
-  .actions{ display:flex; gap:12px; flex-wrap:wrap }
-  button{
-    background:var(--primary); color:white; font-weight:600; cursor:pointer;
-    transition:background .2s;
-  }
-  button:hover{ background:var(--primary-2) }
-  .muted{ background:#0e1726; color:#9fb3c8; border-color:#1b2540 }
-  pre{
-    background:#0a1324; color:#8ef2ff; padding:12px; border-radius:8px;
-    overflow:auto; white-space:pre; font-size:13px; border:1px solid #10213c;
-  }
-  .title{ font-weight:700; margin:0 0 4px; color:#e6f6ff }
-  .badge{ display:inline-flex; gap:8px; align-items:center; font:600 12px/1.6 system-ui;
-    padding:6px 10px; border-radius:999px; border:1px solid #143056; color:#bfe9ff; background:#0a182a }
-  .columns{ display:grid; gap:16px; grid-template-columns:1fr 1fr }
-  @media (max-width:900px){ .row,.row-3,.columns{ grid-template-columns:1fr } }
-  .hint{ color:#e2e8f0 }
-  .ok{ color:var(--ok) }
-  .warn{ color:var(--warn) }
+  body{margin:0;padding:20px;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text)}
+  header h1{margin:0 0 6px;text-align:center;color:var(--accent)}
+  header p{margin:0 0 18px;text-align:center;color:var(--muted)}
+  .grid{max-width:1200px;margin:0 auto;display:grid;gap:16px;grid-template-columns:1fr}
+  .card{background:var(--card);border:1px solid #0f1b2f;border-radius:12px;padding:16px}
+  label{display:block;font-size:14px;color:#cbd5e1;margin:0 0 6px}
+  textarea,input,select,button{width:100%;padding:10px 12px;border-radius:8px;border:1px solid #1e293b;background:#0e1726;color:#e2e8f0;font-size:14px;outline:none}
+  textarea{min-height:220px;resize:vertical}
+  .row{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+  .row-3{display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr}
+  .help{color:#9fb3c8;font-size:12px;margin-top:6px}
+  .actions{display:flex;flex-wrap:wrap;gap:12px}
+  button{cursor:pointer;background:var(--primary);color:#fff;font-weight:600}
+  button:hover{background:var(--primary-2)}
+  .muted{background:#0e1726;border-color:#1b2540;color:#9fb3c8}
+  pre{background:#0a1324;border:1px solid #10213c;color:#8ef2ff;padding:12px;border-radius:8px;white-space:pre;overflow:auto;font-size:13px}
+  .columns{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+  @media (max-width:920px){.row,.row-3,.columns{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header>
-  <h1>
-    <img src="https://firebase.google.com/images/icons/firebase_studio.png" alt="Icon">
-    Gerador Automático de PWA
-  </h1>
-  <p>Preencha os campos, escolha a estratégia de cache e gere <b>manifest.webmanifest</b>, <b>service-worker.js</b> e um <b>index.html</b> pronto para instalar.</p>
+  <h1>Gerador Automático de PWA</h1>
+  <p>Cole seu <b>index.html</b> completo abaixo. Eu detecto título, cores, favicon e gero Manifest, Service Worker e o Index modificado. Também baixo tudo em ZIP.</p>
 </header>
 
 <main class="grid">
   <section class="card">
-    <div class="row">
-      <div>
-        <label>Nome do App (name)</label>
-        <input id="name" placeholder="Ex.: Sistema de Viaturas" value="Meu App PWA" />
-      </div>
-      <div>
-        <label>Nome Curto (short_name)</label>
-        <input id="short_name" placeholder="Ex.: Viaturas" value="MeuApp" />
-      </div>
-    </div>
+    <label>📋 Cole aqui seu <code>index.html</code> completo</label>
+    <textarea id="htmlInput" placeholder="Cole seu index.html..."></textarea>
 
-    <label>Descrição</label>
-    <textarea id="description" placeholder="Descrição do aplicativo...">PWA gerado automaticamente — com atualização inteligente, versão por timestamp e suporte a iOS.</textarea>
-
-    <div class="row">
+    <div class="row" style="margin-top:12px">
       <div>
-        <label>Start URL</label>
-        <input id="start_url" value="./index.html" />
-        <div class="help">Geralmente <code>./index.html</code> ou <code>./</code></div>
-      </div>
-      <div>
-        <label>Scope</label>
-        <input id="scope" value="./" />
-        <div class="help">Escopo de navegação do PWA (normalmente <code>./</code>)</div>
-      </div>
-    </div>
-
-    <div class="row-3">
-      <div>
-        <label>Display</label>
-        <select id="display">
-          <option value="standalone" selected>standalone</option>
-          <option value="minimal-ui">minimal-ui</option>
-          <option value="fullscreen">fullscreen</option>
-          <option value="browser">browser</option>
+        <label>Estratégia de Cache</label>
+        <select id="cacheStrategy">
+          <option value="network-first" selected>Network-first (recomendado)</option>
+          <option value="cache-first">Cache-first (offline forte)</option>
         </select>
+        <div class="help">Navegações HTML sempre serão tratadas como network-first para atualizar rápido.</div>
       </div>
       <div>
-        <label>Orientation</label>
-        <select id="orientation">
-          <option value="any" selected>any</option>
-          <option value="portrait">portrait</option>
-          <option value="landscape">landscape</option>
-        </select>
-      </div>
-      <div>
-        <label>Preferência de idioma</label>
-        <input id="lang" value="pt-BR" />
-      </div>
-    </div>
-
-    <div class="row-3">
-      <div>
-        <label>Theme Color</label>
-        <input type="color" id="theme_color" value="#004aad" />
-      </div>
-      <div>
-        <label>Background Color</label>
-        <input type="color" id="background_color" value="#004aad" />
-      </div>
-      <div>
-        <label>Cor da Status Bar (iOS)</label>
-        <select id="apple_status_bar">
-          <option value="default" selected>default</option>
-          <option value="black">black</option>
-          <option value="black-translucent">black-translucent</option>
+        <label>Modo de Atualização</label>
+        <select id="updateMode">
+          <option value="prompt" selected>Perguntar (banner "Atualizar agora")</option>
+          <option value="auto">Atualizar automaticamente (silencioso)</option>
         </select>
       </div>
     </div>
 
     <div class="row">
       <div>
-        <label>Pasta/Prefixo dos Ícones</label>
-        <input id="icons_path" value="icons/icon" />
-        <div class="help">Deixe <b>icons/icon</b> se você tiver <code>icons/icon-48.png ... icon-512.png</code></div>
+        <label>Pasta/Prefixo dos Ícones (fallback)</label>
+        <input id="iconsPath" value="icons/icon" />
+        <div class="help">Se não houver favicon no HTML, uso <code>icons/icon-48.png ... icon-512.png</code>.</div>
       </div>
       <div>
-        <label>Tipagem dos Ícones</label>
-        <select id="icon_type">
+        <label>Tipo dos Ícones</label>
+        <select id="iconType">
           <option value="image/png" selected>image/png</option>
           <option value="image/webp">image/webp</option>
           <option value="image/svg+xml">image/svg+xml</option>
@@ -166,153 +76,138 @@
       </div>
     </div>
 
-    <div class="row">
-      <div>
-        <label>Estratégia de Cache</label>
-        <select id="cache_strategy">
-          <option value="network-first" selected>Network-first (preferir rede, cair no cache)</option>
-          <option value="cache-first">Cache-first (offline forte)</option>
-        </select>
-        <div class="help">Recomendado: <b>Network-first</b> para garantir atualizações rápidas e fallback offline.</div>
-      </div>
-      <div>
-        <label>Atualização</label>
-        <select id="update_mode">
-          <option value="prompt" selected>Perguntar antes de atualizar (banner)</option>
-          <option value="auto">Atualizar automaticamente (silencioso)</option>
-        </select>
-        <div class="help">Quando houver nova versão do Service Worker.</div>
-      </div>
-    </div>
-
     <div class="actions" style="margin-top:12px">
-      <button onclick="gerarArquivos()">Gerar Arquivos 🔥</button>
-      <button class="muted" onclick="preencherExemplo()">Preencher Exemplo</button>
+      <button id="btnGenerate">Gerar Arquivos 🔥</button>
+      <button class="muted" id="btnZip">Baixar ZIP</button>
     </div>
   </section>
 
   <section class="card">
     <div class="columns">
       <div>
-        <div class="title">📄 manifest.webmanifest</div>
-        <pre id="out_manifest"></pre>
+        <h3 style="margin:0 0 8px">📄 manifest.webmanifest</h3>
+        <pre id="outManifest"></pre>
       </div>
       <div>
-        <div class="title">📄 service-worker.js</div>
-        <pre id="out_sw"></pre>
+        <h3 style="margin:0 0 8px">📄 service-worker.js</h3>
+        <pre id="outSW"></pre>
       </div>
     </div>
   </section>
 
   <section class="card">
-    <div class="title">📄 index.html (modelo)</div>
-    <pre id="out_index"></pre>
-  </section>
-
-  <section class="card">
-    <span class="badge">Dica rápida</span>
-    <ul class="help" style="margin:10px 0 0 18px">
-      <li>Coloque os ícones em <code>icons/</code> com nomes <code>icon-48.png</code>, <code>72</code>, <code>96</code>, <code>128</code>, <code>144</code>, <code>152</code>, <code>192</code>, <code>256</code>, <code>384</code>, <code>512</code>.</li>
-      <li>Suba os três arquivos gerados (manifest, service-worker e index) no seu projeto.</li>
-      <li>No GitHub Pages / Firebase Hosting, use HTTPS para permitir instalação PWA.</li>
-    </ul>
+    <h3 style="margin:0 0 8px">📄 index.html (modificado)</h3>
+    <pre id="outIndex"></pre>
   </section>
 </main>
 
+<!-- ZIP libs -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
 <script>
-function tsVersion() {
-  const d = new Date();
-  const pad = (n)=> String(n).padStart(2,'0');
-  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}`;
-}
-function preencherExemplo(){
-  document.getElementById('name').value = 'Conversor de Imagens PWA';
-  document.getElementById('short_name').value = 'Conversor';
-  document.getElementById('description').value = 'Converta e gere ícones em múltiplos formatos — PWA com update inteligente.';
-  document.getElementById('start_url').value = './index.html';
-  document.getElementById('scope').value = './';
-  document.getElementById('display').value = 'standalone';
-  document.getElementById('orientation').value = 'any';
-  document.getElementById('lang').value = 'pt-BR';
-  document.getElementById('theme_color').value = '#004aad';
-  document.getElementById('background_color').value = '#004aad';
-  document.getElementById('apple_status_bar').value = 'black-translucent';
-  document.getElementById('icons_path').value = 'icons/icon';
-  document.getElementById('icon_type').value = 'image/png';
-  document.getElementById('cache_strategy').value = 'network-first';
-  document.getElementById('update_mode').value = 'prompt';
-}
-function gerarArquivos(){
-  const name = document.getElementById('name').value.trim();
-  const short_name = document.getElementById('short_name').value.trim() || name.slice(0,12);
-  const description = document.getElementById('description').value.trim();
-  const start_url = document.getElementById('start_url').value.trim() || './index.html';
-  const scope = document.getElementById('scope').value.trim() || './';
-  const display = document.getElementById('display').value;
-  const orientation = document.getElementById('orientation').value;
-  const lang = document.getElementById('lang').value.trim() || 'pt-BR';
-  const theme_color = document.getElementById('theme_color').value || '#004aad';
-  const background_color = document.getElementById('background_color').value || theme_color;
-  const apple_status = document.getElementById('apple_status_bar').value;
-  const icons_path = document.getElementById('icons_path').value.trim() || 'icons/icon';
-  const icon_type = document.getElementById('icon_type').value;
-  const cache_strategy = document.getElementById('cache_strategy').value; // 'network-first' | 'cache-first'
-  const update_mode = document.getElementById('update_mode').value; // 'prompt' | 'auto'
+const $ = (id)=>document.getElementById(id);
+const TS = ()=> {
+  const d=new Date(); const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+p(d.getHours())+p(d.getMinutes());
+};
 
-  const VERSION = tsVersion();
+function parseHTML(html){
+  const parser = new DOMParser();
+  return parser.parseFromString(html, 'text/html');
+}
+function getMeta(doc, name){
+  return doc.querySelector(\`meta[name="\${name}"]\`)?.getAttribute('content') || '';
+}
+function ensureMeta(doc, name, content){
+  let m = doc.querySelector(\`meta[name="\${name}"]\`);
+  if (!m){
+    m = doc.createElement('meta');
+    m.setAttribute('name', name);
+    m.setAttribute('content', content);
+    doc.head.appendChild(m);
+  } else {
+    m.setAttribute('content', content);
+  }
+}
+function ensureLink(doc, relValue, attrs){
+  // Remove existentes com mesmo rel
+  [...doc.querySelectorAll('link')].forEach(l=>{
+    const rel = (l.getAttribute('rel')||'').toLowerCase();
+    if (rel.split(' ').includes(relValue.toLowerCase())) l.remove();
+  });
+  const link = doc.createElement('link');
+  link.setAttribute('rel', relValue);
+  for (const [k,v] of Object.entries(attrs)) link.setAttribute(k, v);
+  doc.head.appendChild(link);
+}
 
-  // Manifest com ícones padrão
-  const manifest = {
-    name, short_name, description,
-    lang,
-    start_url,
-    scope,
-    display,
-    orientation,
-    background_color,
-    theme_color,
+function detectFavicon(doc){
+  const links = [...doc.querySelectorAll('link[rel]')];
+  // procura por apple-touch-icon e icon
+  const prefer = links.find(l => (l.getAttribute('rel')||'').toLowerCase().includes('apple-touch-icon'));
+  const anyIcon = links.find(l => (l.getAttribute('rel')||'').toLowerCase().includes('icon'));
+  const href = prefer?.getAttribute('href') || anyIcon?.getAttribute('href') || '';
+  return href;
+}
+
+function absolutize(url, base){
+  try { return new URL(url, base).toString(); } catch(e){ return url; }
+}
+
+function buildManifest({title, shortName, description, lang, themeColor, backgroundColor, iconsPath, iconType}){
+  return {
+    name: title,
+    short_name: shortName || title.slice(0,12),
+    description: description || \`\${title} — PWA\`,
+    lang: lang || 'pt-BR',
+    start_url: './index.html',
+    scope: './',
+    display: 'standalone',
+    orientation: 'any',
+    background_color: backgroundColor || themeColor || '#004aad',
+    theme_color: themeColor || '#004aad',
     icons: [
-      { src: `${icons_path}-48.png`,  sizes:"48x48",   type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-72.png`,  sizes:"72x72",   type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-96.png`,  sizes:"96x96",   type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-128.png`, sizes:"128x128", type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-144.png`, sizes:"144x144", type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-152.png`, sizes:"152x152", type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-192.png`, sizes:"192x192", type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-256.png`, sizes:"256x256", type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-384.png`, sizes:"384x384", type:icon_type, purpose:"any maskable" },
-      { src: `${icons_path}-512.png`, sizes:"512x512", type:icon_type, purpose:"any maskable" }
+      { src:\`\${iconsPath}-48.png\`,  sizes:'48x48',   type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-72.png\`,  sizes:'72x72',   type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-96.png\`,  sizes:'96x96',   type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-128.png\`, sizes:'128x128', type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-144.png\`, sizes:'144x144', type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-152.png\`, sizes:'152x152', type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-192.png\`, sizes:'192x192', type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-256.png\`, sizes:'256x256', type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-384.png\`, sizes:'384x384', type:iconType, purpose:'any maskable' },
+      { src:\`\${iconsPath}-512.png\`, sizes:'512x512', type:iconType, purpose:'any maskable' }
     ]
   };
+}
 
-  // Service Worker com troca entre strategies
-  const sw = `/* service-worker.js — Gerado automaticamente
-   Estratégia: ${cache_strategy} | Update: ${update_mode} | Versão: ${VERSION} */
-const VERSION = '${VERSION}';
+function buildSW({strategy, updateMode, version}){
+  const coreList = `['./','./index.html','./manifest.webmanifest']`;
+  return `/* service-worker.js — Gerado automaticamente
+ Estratégia: ${strategy} | Update: ${updateMode} | Versão: ${version} */
+const VERSION = '${version}';
 const CACHE_NAME = 'pwa-cache-' + VERSION;
-const CORE = [
-  '${start_url.replace('./','/')}',
-  '/manifest.webmanifest'
-];
+const CORE = ${coreList};
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).then(() => {
-      ${update_mode === 'auto' ? 'self.skipWaiting();' : '// aguardará confirmação do cliente'}
+    caches.open(CACHE_NAME).then(c => c.addAll(CORE)).then(() => {
+      ${updateMode==='auto' ? 'self.skipWaiting();' : '// aguarda confirmação do cliente'}
     })
   );
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    const names = await caches.keys();
-    await Promise.all(names.map(n => { if (n !== CACHE_NAME) return caches.delete(n); }));
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => { if (k !== CACHE_NAME) return caches.delete(k); }));
     self.clients.claim();
   })());
 });
 
 function isHttp(req){ return req.url.startsWith('http'); }
-function sameOrigin(url){ return url.startsWith(self.location.origin); }
+function sameOrigin(u){ return u.startsWith(self.location.origin); }
 
 async function networkFirst(event){
   try{
@@ -325,13 +220,10 @@ async function networkFirst(event){
   }catch(e){
     const cached = await caches.match(event.request);
     if (cached) return cached;
-    if (event.request.mode === 'navigate') {
-      return caches.match('${start_url.replace('./','/')}');
-    }
+    if (event.request.mode === 'navigate') return caches.match('./index.html');
     throw e;
   }
 }
-
 async function cacheFirst(event){
   const cached = await caches.match(event.request);
   if (cached) return cached;
@@ -347,156 +239,196 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (!isHttp(request)) return;
 
-  // Navegações (HTML) sempre network-first para atualizar rapidamente
   const isNav = request.mode === 'navigate' ||
                 (request.headers.get('accept')||'').includes('text/html');
+  if (isNav){ event.respondWith(networkFirst(event)); return; }
 
-  if (isNav){
-    event.respondWith(networkFirst(event));
-    return;
-  }
-
-  // Assets estáticos mesmo host (css/js/img) — estratégia selecionada
   if (sameOrigin(request.url) && request.method==='GET'){
-    event.respondWith(${cache_strategy === 'network-first' ? 'networkFirst(event)' : 'cacheFirst(event)'});
+    event.respondWith(${strategy==='network-first' ? 'networkFirst(event)' : 'cacheFirst(event)'});
   }
 });
 
-// Mensagens do cliente (página) para controlar update
-self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+self.addEventListener('message', e => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });`;
-
-  // index.html com registro do SW e banner de update opcional
-  const index = `<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>${name}</title>
-
-  <!-- Manifest -->
-  <link rel="manifest" href="manifest.webmanifest">
-
-  <!-- Favicon / Apple -->
-  <link rel="icon" type="${icon_type}" href="${icons_path}-192.png">
-  <link rel="apple-touch-icon" href="${icons_path}-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="${apple_status}">
-  <meta name="apple-mobile-web-app-title" content="${short_name}">
-
-  <!-- Cores -->
-  <meta name="theme-color" content="${theme_color}">
-  <meta name="background-color" content="${background_color}">
-  <meta name="description" content="${description}">
-
-  <style>
-    :root{
-      --c1:${theme_color};
-      --bg:#0b1120; --card:#0f172a; --text:#e2e8f0; --muted:#94a3b8;
-      --ok:#16a34a; --warn:#f59e0b;
-    }
-    *{ box-sizing:border-box; font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif }
-    body{ margin:0; background:var(--bg); color:var(--text); }
-    .wrap{ max-width:900px; margin:40px auto; padding:0 16px }
-    .hero{ background:linear-gradient(180deg, rgba(255,255,255,.02), transparent 60%), #0e1a2d;
-           border:1px solid #12213d; border-radius:16px; padding:24px }
-    h1{ margin:0 0 6px; color:#84d8ff }
-    p{ margin:0; color:var(--muted) }
-    .ver{ margin-top:12px; font-size:12px; color:#bfe9ff }
-    .card{ margin-top:20px; padding:16px; border-radius:12px; background:#0c1528; border:1px solid #132446 }
-    .btn{
-      appearance:none; cursor:pointer; border:1px solid #1d3460; background:#0f1930; color:#e2e8f0;
-      padding:10px 14px; border-radius:10px; font-weight:600;
-    }
-    .btn.primary{ background:var(--c1); border-color:#023b8b }
-    .update-banner{
-      display:none; margin-top:16px; padding:12px; border-radius:10px;
-      border:1px solid #274063; background:#10213a; color:#d7f0ff
-    }
-    .update-banner.show{ display:flex; gap:12px; align-items:center; justify-content:space-between }
-    code{ background:#0a1324; padding:2px 6px; border-radius:6px; border:1px solid #10213c }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="hero">
-      <h1>${name}</h1>
-      <p>${description}</p>
-      <div class="ver">Versão: <code>${VERSION}</code></div>
-
-      <div id="updateBanner" class="update-banner">
-        <div>Uma atualização está pronta.</div>
-        <div style="display:flex; gap:8px">
-          <button class="btn" id="laterBtn">Depois</button>
-          <button class="btn primary" id="refreshBtn">Atualizar agora</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Exemplo de conteúdo</h2>
-      <p>Este é um template inicial do seu PWA. Edite à vontade ✨</p>
-    </div>
-  </div>
-
-  <script>
-  (function(){
-    if ('serviceWorker' in navigator) {
-      const swUrl = 'service-worker.js';
-      let newWorker;
-
-      navigator.serviceWorker.register(swUrl).then(reg => {
-        // Detecta novo SW
-        reg.addEventListener('updatefound', () => {
-          newWorker = reg.installing;
-          if (!newWorker) return;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed') {
-              if (navigator.serviceWorker.controller) {
-                ${update_mode === 'prompt' ? 'showUpdateBanner();' : 'reloadSilently();'}
-              } else {
-                // Primeiro install
-              }
-            }
-          });
-        });
-      }).catch(console.error);
-
-      // Comunicação com SW para ativar imediatamente
-      function refreshNow(){
-        if (!navigator.serviceWorker.controller) { location.reload(); return; }
-        navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
-      }
-
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // Quando o novo SW assume, recarrega
-        location.reload();
-      });
-
-      function showUpdateBanner(){
-        const b = document.getElementById('updateBanner');
-        b.classList.add('show');
-        document.getElementById('refreshBtn').onclick = () => refreshNow();
-        document.getElementById('laterBtn').onclick = () => b.classList.remove('show');
-      }
-      function reloadSilently(){
-        refreshNow();
-      }
-    }
-  })();
-  </script>
-</body>
-</html>`;
-
-  // Saída
-  document.getElementById('out_manifest').textContent = JSON.stringify(manifest, null, 2);
-  document.getElementById('out_sw').textContent = sw;
-  document.getElementById('out_index').textContent = index;
 }
+
+function injectPWAIntoHTML(originalHTML, {title, themeColor, backgroundColor, shortName, appleIconHref, useAppleIcon}){
+  const doc = parseHTML(originalHTML);
+
+  // Título
+  if (title) doc.title = title;
+
+  // Manifest
+  ensureLink(doc, 'manifest', { href: 'manifest.webmanifest' });
+
+  // Cores/meta
+  ensureMeta(doc, 'theme-color', themeColor || '#004aad');
+  if (backgroundColor) ensureMeta(doc, 'background-color', backgroundColor);
+
+  // Apple PWA
+  ensureMeta(doc, 'apple-mobile-web-app-capable', 'yes');
+  ensureMeta(doc, 'apple-mobile-web-app-status-bar-style', 'default');
+  ensureMeta(doc, 'apple-mobile-web-app-title', shortName || title || 'App');
+
+  // Favicon / Apple-touch-icon (usar detectado se houver)
+  if (useAppleIcon && appleIconHref){
+    const abs = absolutize(appleIconHref, location.href);
+    ensureLink(doc, 'icon', { href: abs });
+    ensureLink(doc, 'apple-touch-icon', { href: abs });
+  } else {
+    ensureLink(doc, 'icon', { href: 'icons/icon-192.png', type: 'image/png' });
+    ensureLink(doc, 'apple-touch-icon', { href: 'icons/icon-192.png' });
+  }
+
+  // Banner de atualização + registro do SW (inserir perto do fim do body)
+  const bannerCSS = `
+  <style id="pwa-update-style">
+  .pwa-update{display:none;margin:16px; padding:12px; border-radius:10px; border:1px solid #274063; background:#10213a; color:#d7f0ff;
+    display:flex; gap:12px; align-items:center; justify-content:space-between}
+  .pwa-update.show{display:flex}
+  .pwa-btn{appearance:none; cursor:pointer; border:1px solid #1d3460; background:#0f1930; color:#e2e8f0;
+    padding:8px 12px; border-radius:10px; font-weight:600}
+  .pwa-btn.primary{ background:${themeColor||'#004aad'}; border-color:#023b8b }
+  </style>`;
+  if (!doc.querySelector('#pwa-update-style')){
+    const frag = doc.createRange().createContextualFragment(bannerCSS);
+    doc.head.appendChild(frag);
+  }
+
+  const bannerHTML = `
+  <div id="pwaUpdateBanner" class="pwa-update" role="status" aria-live="polite">
+    <div>Uma atualização está pronta.</div>
+    <div style="display:flex;gap:8px">
+      <button class="pwa-btn" id="pwaLaterBtn">Depois</button>
+      <button class="pwa-btn primary" id="pwaRefreshBtn">Atualizar agora</button>
+    </div>
+  </div>`;
+  if (!doc.getElementById('pwaUpdateBanner')){
+    const frag = doc.createRange().createContextualFragment(bannerHTML);
+    doc.body.appendChild(frag);
+  }
+
+  const regJS = `
+  <script id="pwa-register-script">
+  (function(){
+    if (!('serviceWorker' in navigator)) return;
+    var newWorker;
+    navigator.serviceWorker.register('service-worker.js').then(function(reg){
+      reg.addEventListener('updatefound', function(){
+        newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', function(){
+          if (newWorker.state === 'installed'){
+            if (navigator.serviceWorker.controller){
+              // show banner
+              var b = document.getElementById('pwaUpdateBanner');
+              if (b){ b.classList.add('show'); }
+            }
+          }
+        });
+      });
+    }).catch(console.error);
+
+    function refreshNow(){
+      if (!navigator.serviceWorker.controller){ location.reload(); return; }
+      navigator.serviceWorker.controller.postMessage('SKIP_WAITING');
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      location.reload();
+    });
+    var r = document.getElementById('pwaRefreshBtn');
+    var l = document.getElementById('pwaLaterBtn');
+    if (r) r.addEventListener('click', refreshNow);
+    if (l) l.addEventListener('click', function(){
+      var b = document.getElementById('pwaUpdateBanner');
+      if (b) b.classList.remove('show');
+    });
+  })();
+  </script>`;
+  if (!doc.querySelector('#pwa-register-script')){
+    const frag = doc.createRange().createContextualFragment(regJS);
+    doc.body.appendChild(frag);
+  }
+
+  // Garante <!DOCTYPE html>
+  return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+}
+
+function generate(){
+  const raw = $('htmlInput').value;
+  if (!raw.trim()){ alert('Cole seu index.html primeiro.'); return; }
+
+  const doc = parseHTML(raw);
+
+  const title = (doc.title || 'Meu App PWA').trim();
+  const shortName = title.slice(0, 12);
+  const lang = doc.documentElement.getAttribute('lang') || 'pt-BR';
+  const themeColor = getMeta(doc, 'theme-color') || '#004aad';
+  const backgroundColor = getMeta(doc, 'background-color') || themeColor;
+  const description = getMeta(doc, 'description') || '';
+  const faviconHref = detectFavicon(doc); // pode ser vazio
+
+  const iconsPath = $('iconsPath').value.trim() || 'icons/icon';
+  const iconType = $('iconType').value;
+  const strategy = $('cacheStrategy').value;
+  const updateMode = $('updateMode').value;
+  const version = TS();
+
+  // Manifest (usa SEMPRE ícones padrão — o favicon detectado é usado no index)
+  const manifest = buildManifest({
+    title, shortName, description, lang, themeColor, backgroundColor,
+    iconsPath, iconType
+  });
+
+  const sw = buildSW({strategy, updateMode, version});
+
+  // Index modificado
+  const indexMod = injectPWAIntoHTML(raw, {
+    title, themeColor, backgroundColor, shortName,
+    appleIconHref: faviconHref, useAppleIcon: !!faviconHref
+  });
+
+  // Saídas
+  $('outManifest').textContent = JSON.stringify(manifest, null, 2);
+  $('outSW').textContent = sw;
+  $('outIndex').textContent = indexMod;
+  return { manifest, sw, indexMod, version, faviconHref };
+}
+
+$('btnGenerate').addEventListener('click', generate);
+
+$('btnZip').addEventListener('click', function(){
+  const res = generate();
+  if (!res) return;
+  const zip = new JSZip();
+  zip.file('manifest.webmanifest', JSON.stringify(res.manifest, null, 2));
+  zip.file('service-worker.js', res.sw);
+  zip.file('index.html', res.indexMod);
+  const readme = `PWA gerado automaticamente
+
+Arquivos:
+- manifest.webmanifest
+- service-worker.js
+- index.html (modificado com manifest, metas, favicon, banner de update e registro do SW)
+
+Observações:
+- Ícones esperados (coloque na pasta): icons/icon-48.png, 72, 96, 128, 144, 152, 192, 256, 384, 512
+- Favicon detectado no HTML original: ${res.faviconHref || 'N/D'}
+- Estratégia de cache: ${$('cacheStrategy').value}
+- Modo de atualização: ${$('updateMode').value}
+- Versão: ${res.version}
+
+Dica:
+- Navegações são sempre network-first para que seu app atualize rápido.
+- Se já existirem tags de manifest/ícones no HTML original, eu substituí pelas necessárias do PWA.
+`;
+  zip.file('README-PWA.txt', readme);
+
+  zip.generateAsync({type:'blob'}).then(blob=>{
+    saveAs(blob, 'pwa-gerado.zip');
+  });
+});
 </script>
 </body>
 </html>
