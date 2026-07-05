@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NELSON PLAYER - IPTV</title>
+<title>NELSON PLAYER</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* GERAL */
 *{
     margin:0;
     padding:0;
@@ -17,7 +16,7 @@
 }
 
 body{
-    background:#0b0b0b;
+    background:#000;
     color:#fff;
     overflow:hidden;
     width: 100vw;
@@ -44,35 +43,11 @@ body{
     font-weight:700;
     letter-spacing:10px;
     color:#fff;
-    animation: logo-anim 2s infinite alternate;
+    text-shadow: 0 0 15px #00aeff;
 }
-
-@keyframes logo-anim{
-    0%{ text-shadow: 0 0 5px #00aeff, 0 0 15px #00aeff; transform:scale(1); }
-    100%{ text-shadow: 0 0 15px #00aeff, 0 0 35px #00aeff, 0 0 60px #00aeff; transform:scale(1.05); }
-}
-
-.loader{
-    width:200px;
-    height:4px;
-    background:#222;
-    margin-top:30px;
-    border-radius:20px;
-    overflow:hidden;
-}
-
-.loader span{
-    display:block;
-    height:100%;
-    width:0%;
-    background:#00aeff;
-    animation: carregar-barra 2s forwards;
-}
-
-@keyframes carregar-barra{ 100%{ width:100%; } }
 
 /*==========================
-    ESTRUTURA DO APP
+    ESTRUTURA
 ==========================*/
 #app{
     display:none;
@@ -80,7 +55,7 @@ body{
     width: 100%;
 }
 
-/* BARRA LATERAL (ASIDE) */
+/* SIDEBAR */
 aside{
     width:280px;
     background:#111;
@@ -96,14 +71,13 @@ aside{
     transition: 0.3s ease;
 }
 
-/* CONTEÚDO PRINCIPAL (MAIN) */
 main{
     margin-left:280px;
     width: calc(100% - 280px);
     height:100vh;
     display:flex;
     flex-direction:column;
-    transition: 0.3s ease;
+    background: #050505;
 }
 
 /* HEADER */
@@ -112,152 +86,99 @@ header{
     background:#111;
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    padding:0 20px;
+    padding:0 15px;
     border-bottom:1px solid #1f1f1f;
+    gap: 10px;
 }
 
 .menu-toggle{
-    display: none; /* Escondido no PC */
-    background: none;
+    display: none;
+    background: #222;
     border: none;
     color: #fff;
-    font-size: 24px;
-    cursor: pointer;
-}
-
-.perfil{ text-align:center; margin-bottom:30px; }
-.avatar{
-    width:60px; height:60px; border-radius:50%;
-    background:#00aeff; display:flex; justify-content:center;
-    align-items:center; font-size:25px; font-weight:bold; margin:auto;
-}
-
-.fav-header {
-    font-size: 14px;
-    color: #00aeff;
-    text-transform: uppercase;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #222;
-}
-
-#listaFavoritos {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.fav-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #181818;
-    margin-bottom: 10px;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-}
-
-.fav-nome { font-size: 13px; font-weight: 500; }
-.btn-del {
-    background: #ff4444;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-}
-
-/* BUSCA */
-.busca{ display:flex; gap:8px; flex: 1; justify-content: flex-end; }
-.busca input{
-    width: 100%;
-    max-width: 200px;
     padding: 10px;
+    border-radius: 8px;
+    font-size: 20px;
+}
+
+.busca{ 
+    display:flex; 
+    gap:5px; 
+    flex: 1;
+}
+
+.busca input{
+    flex: 1;
+    padding: 12px;
     border: none;
     border-radius: 8px;
     background: #222;
     color: white;
     font-size: 14px;
 }
+
 .btn-busca {
     background: #00aeff;
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 0 15px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
 }
+
 .btn-fav {
     background: #f1c40f;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 0 15px;
     border: none;
-    cursor: pointer;
+    border-radius: 8px;
 }
 
-/* PLAYER AREA */
+/* LISTA FAVORITOS */
+.perfil { text-align: center; margin-bottom: 20px; }
+.avatar { width: 50px; height: 50px; background: #00aeff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-weight: bold; }
+
+#listaFavoritos { flex: 1; overflow-y: auto; }
+.fav-item {
+    background: #1a1a1a;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+.btn-del { background: #ff4444; border: none; color: #fff; padding: 5px 10px; border-radius: 5px; }
+
+/* PLAYER - IMPORTANTE */
 #playerArea{
     flex:1;
     background: #000;
-    padding: 5px;
+    position: relative;
 }
 
-iframe {
+#mainPlayer {
     width: 100%;
     height: 100%;
     border: none;
-    background: #000;
 }
 
-footer{
-    height:30px; background:#111;
-    display:flex; justify-content:center; align-items:center;
-    font-size:11px; color:#555;
-}
-
-/*==========================
-    RESPONSIVIDADE (CELULAR)
-==========================*/
+/* RESPONSIVIDADE */
 @media (max-width: 768px) {
-    aside {
-        left: -280px; /* Esconde a barra lateral */
-    }
-    
-    aside.active {
-        left: 0; /* Mostra a barra lateral ao clicar */
-    }
-
-    main {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .menu-toggle {
-        display: block; /* Mostra botão hambúrguer */
-        margin-right: 15px;
-    }
-
-    header h2 {
-        display: none; /* Esconde título longo para sobrar espaço */
-    }
-
-    .busca input {
-        max-width: 150px;
-    }
+    aside { left: -280px; }
+    aside.active { left: 0; }
+    main { margin-left: 0; width: 100%; }
+    .menu-toggle { display: block; }
     
     .overlay {
         display: none;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.7);
-        z-index: 999;
+        background: rgba(0,0,0,0.8);
+        z-index: 998;
     }
-    
-    .overlay.active {
-        display: block;
-    }
+    .overlay.active { display: block; }
 }
 </style>
 </head>
@@ -265,28 +186,24 @@ footer{
 
 <div id="splash">
     <div class="logo-splash">NELSON</div>
-    <div class="loader"><span></span></div>
+    <p style="color: #555; letter-spacing: 5px;">PLAYER</p>
 </div>
 
-<!-- Overlay para fechar menu no mobile -->
 <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
 
 <div id="app">
     <aside id="aside">
         <div class="perfil">
             <div class="avatar">N</div>
-            <div class="nome">NELSON PLAYER</div>
+            <p>NELSON IPTV</p>
         </div>
-        
-        <div class="fav-header">⭐ MEUS FAVORITOS</div>
+        <p style="font-size: 12px; color: #00aeff; margin-bottom: 10px;">⭐ MEUS FAVORITOS</p>
         <div id="listaFavoritos"></div>
     </aside>
 
     <main>
         <header>
             <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-            <h2 style="font-size: 18px; letter-spacing: 1px;">NELSON IPTV</h2>
-            
             <div class="busca">
                 <input type="text" id="canalInput" placeholder="ID do canal..." value="gloob">
                 <button class="btn-busca" onclick="abrirCanal()">VER</button>
@@ -295,17 +212,23 @@ footer{
         </header>
 
         <div id="playerArea">
-            <iframe id="mainPlayer" allowfullscreen allow="encrypted-media"></iframe>
+            <!-- REMOVIDO SANDBOX PARA EVITAR ERRO NO CELULAR -->
+            <iframe 
+                id="mainPlayer" 
+                src="" 
+                allowfullscreen="true" 
+                webkitallowfullscreen="true" 
+                mozallowfullscreen="true" 
+                scrolling="no"
+                frameborder="0"
+                allow="autoplay; encrypted-media">
+            </iframe>
         </div>
-
-        <footer>
-            © 2026 Nelson Player • v1.5 Responsivo
-        </footer>
     </main>
 </div>
 
 <script>
-    // Gerenciamento do Splash
+    // Splash
     window.onload = () => {
         setTimeout(() => {
             document.getElementById("splash").style.opacity = "0";
@@ -315,42 +238,41 @@ footer{
                 carregarFavoritos();
                 abrirCanal();
             }, 800);
-        }, 2000);
+        }, 1500);
     };
 
-    // Toggle Menu Mobile
     function toggleMenu() {
         document.getElementById("aside").classList.toggle("active");
         document.getElementById("overlay").classList.toggle("active");
     }
 
-    // Lógica do Player
     function abrirCanal() {
         const canal = document.getElementById("canalInput").value.trim();
-        const player = document.getElementById("mainPlayer");
-        
         if (canal !== "") {
-            player.src = "https://redecanaistv.win/player3/ch.php?canal=" + encodeURIComponent(canal);
-            // Fecha o menu no mobile ao carregar canal
+            const url = "https://redecanaistv.win/player3/ch.php?canal=" + encodeURIComponent(canal);
+            document.getElementById("mainPlayer").src = url;
+            
+            // Fecha menu no mobile
             document.getElementById("aside").classList.remove("active");
             document.getElementById("overlay").classList.remove("active");
         }
     }
 
-    // Lógica de Favoritos
-    let favoritos = JSON.parse(localStorage.getItem('nelson_favs')) || [];
+    // Favoritos
+    let favoritos = JSON.parse(localStorage.getItem('n_favs')) || [];
 
     function salvarFavorito() {
         const canal = document.getElementById("canalInput").value.trim().toLowerCase();
-        if (canal === "" || favoritos.includes(canal)) return;
-        favoritos.push(canal);
-        localStorage.setItem('nelson_favs', JSON.stringify(favoritos));
-        carregarFavoritos();
+        if (canal && !favoritos.includes(canal)) {
+            favoritos.push(canal);
+            localStorage.setItem('n_favs', JSON.stringify(favoritos));
+            carregarFavoritos();
+        }
     }
 
     function removerFavorito(canal) {
         favoritos = favoritos.filter(f => f !== canal);
-        localStorage.setItem('nelson_favs', JSON.stringify(favoritos));
+        localStorage.setItem('n_favs', JSON.stringify(favoritos));
         carregarFavoritos();
         event.stopPropagation();
     }
@@ -358,29 +280,17 @@ footer{
     function carregarFavoritos() {
         const lista = document.getElementById("listaFavoritos");
         lista.innerHTML = "";
-        
-        if(favoritos.length === 0) {
-            lista.innerHTML = "<p style='color:#444; font-size:12px; text-align:center;'>Sem favoritos.</p>";
-        }
-
         favoritos.forEach(canal => {
             const item = document.createElement("div");
             item.className = "fav-item";
-            item.onclick = () => { 
-                document.getElementById("canalInput").value = canal; 
-                abrirCanal(); 
-            };
-            item.innerHTML = `
-                <span class="fav-nome">📺 ${canal.toUpperCase()}</span>
-                <button class="btn-del" onclick="removerFavorito('${canal}')">X</button>
-            `;
+            item.onclick = () => { document.getElementById("canalInput").value = canal; abrirCanal(); };
+            item.innerHTML = `<span>📺 ${canal.toUpperCase()}</span><button class="btn-del" onclick="removerFavorito('${canal}')">X</button>`;
             lista.appendChild(item);
         });
     }
 
-    // Atalho Enter
-    document.getElementById("canalInput").addEventListener("keydown", function(e) {
-        if (e.key === "Enter") abrirCanal();
+    document.getElementById("canalInput").addEventListener("keydown", (e) => {
+        if(e.key === "Enter") abrirCanal();
     });
 </script>
 
