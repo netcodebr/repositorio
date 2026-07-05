@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NELSON PLAYER - REMOTE</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<!-- SCRIPTS DO FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+/* ... (Mantendo o seu CSS anterior) ... */
+*{ margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+body{ background:#000; color:#fff; overflow:hidden; }
+
+#app{ display:none; height:100vh; display: flex; flex-direction: column; }
+header{ height:70px; background:#111; display:flex; align-items:center; padding:0 15px; border-bottom:1px solid #1f1f1f; gap:10px; }
+.busca{ display:flex; gap:5px; flex: 1; }
+.busca input{ flex: 1; padding: 12px; border-radius: 8px; background: #222; color: white; border:none; }
+.btn-busca { background: #00aeff; color: white; border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor:pointer;}
+
+/* ESTILO DO PAREAMENTO */
+.remote-box {
+    background: #111;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid #222;
+    font-size: 12px;
+}
+.remote-box input {
+    background: #000;
+    border: 1px solid #333;
+    color: #00aeff;
+    padding: 5px;
+    border-radius: 5px;
+    width: 120px;
+}
+
+#playerArea{ flex:1; background: #000; }
+iframe { width: 100%; height: 100%; border: none; }
+
+.status-cloud {
+    width: 10px; height: 10px; border-radius: 50%; background: #444;
+}
+.online { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+</style>
+</head>
+<body>
+
+<div id="app">
+    <!-- BARRA DE CONTROLE REMOTO -->
+    <div class="remote-box">
+        <div id="led" class="status-cloud"></div>
+        <span>Código de Pareamento:</span>
+        <input type="text" id="syncID" placeholder="Ex: nelson123" onchange="conectarFirebase()">
+        <small>(Use o mesmo código nos dois aparelhos)</small>
+    </div>
+
+    <header>
+        <div class="busca">
+            <input type="text" id="canalInput" placeholder="ID do canal..." value="gloob">
+            <button class="btn-busca" onclick="abrirCanal(true)">ASSISTIR</button>
+        </div>
+    </header>
+
+    <div id="playerArea">
+        <iframe id="mainPlayer" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // CONFIGURAÇÃO DO SEU FIREBASE (COLE AQUI)
+    // ==========================================
+    const firebaseConfig = {
+
+    apiKey: "AIzaSyAmJBAfbaWCaFQJiQgEUEpzSbxF0q97VoU",
+    authDomain: "iptvjr.firebaseapp.com",
+    projectId: "iptvjr",
+    storageBucket: "iptvjr.firebasestorage.app",
+    messagingSenderId: "621271517429",
+    appId: "1:621271517429:web:0c266d7b97dafe53111dbc",
+    measurementId: "G-FSQZ25CMVH"
+
+    };
+    
+    // Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    function conectarFirebase() {
+        const id = document.getElementById("syncID").value.trim();
+        if(!id) return;
+
+        document.getElementById("led").classList.add("online");
+
+        // OUVINTE: Se o canal mudar no banco de dados, o player muda aqui
+        database.ref('nelson_player/' + id).on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.canal) {
+                document.getElementById("canalInput").value = data.canal;
+                abrirCanal(false); // Abre o canal sem reenviar para o banco (evita loop)
+            }
+        });
+        
+        alert("Pareamento Ativado no código: " + id);
+    }
+
+    function abrirCanal(propagar) {
+        const canal = document.getElementById("canalInput").value.trim();
+        const syncID = document.getElementById("syncID").value.trim();
+
+        if (canal !== "") {
+            document.getElementById("mainPlayer").src = 
+                "https://redecanaistv.win/player3/ch.php?canal=" + encodeURIComponent(canal);
+
+            // Se eu mudar o canal manualmente e o pareamento estiver ativo, envia para o outro
+            if (propagar && syncID) {
+                database.ref('nelson_player/' + syncID).set({
+                    canal: canal,
+                    timestamp: Date.now()
+                });
+            }
+        }
+    }
+
+    // Auto-carregar se já houver algo no input
+    window.onload = () => {
+        document.getElementById("app").style.display = "flex";
+        abrirCanal(false);
+    };
+</script>
+
+</body>
+</html>
