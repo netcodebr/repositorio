@@ -194,13 +194,16 @@ header{
     flex:1;
     background: #000;
     padding: 10px;
+    position: relative;
 }
 
-iframe {
+/* O BLOQUEADOR DE CLIQUES FANTASMAS (OPCIONAL) */
+#mainPlayer {
     width: 100%;
     height: 100%;
     border: none;
     border-radius: 10px;
+    background: #000;
 }
 
 footer{
@@ -225,27 +228,31 @@ footer{
         </div>
         
         <div class="fav-header">⭐ Meus Favoritos</div>
-        <div id="listaFavoritos">
-            <!-- Canais salvos aparecem aqui -->
-        </div>
+        <div id="listaFavoritos"></div>
     </aside>
 
     <main>
         <header>
-            <h2>ASSISTINDO AGORA</h2>
+            <h2 id="status">PLAYER PRONTO</h2>
             <div class="busca">
-                <input type="text" id="canalInput" placeholder="Digite o ID do canal..." value="bobosp">
+                <input type="text" id="canalInput" placeholder="Digite o ID do canal..." value="gloob">
                 <button class="btn-busca" onclick="abrirCanal()">ASSISTIR</button>
                 <button class="btn-fav" onclick="salvarFavorito()" title="Salvar nos favoritos">★</button>
             </div>
         </header>
 
         <div id="playerArea">
-            <iframe id="mainPlayer" allowfullscreen allow="encrypted-media"></iframe>
+            <!-- Atributo sandbox adicionado para bloquear anúncios e popups -->
+            <iframe 
+                id="mainPlayer" 
+                allowfullscreen 
+                allow="encrypted-media"
+                sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts">
+            </iframe>
         </div>
 
         <footer>
-            © 2026 Nelson Player • Seus favoritos ficam salvos neste navegador.
+            © 2026 Nelson Player • Filtro Anti-Popups Ativado 🛡️
         </footer>
     </main>
 </div>
@@ -268,12 +275,16 @@ footer{
     function abrirCanal() {
         const canal = document.getElementById("canalInput").value.trim();
         const player = document.getElementById("mainPlayer");
+        const status = document.getElementById("status");
+        
         if (canal !== "") {
+            // Atualiza o SRC e limpa o sandbox momentaneamente se necessário
             player.src = "https://redecanaistv.win/player3/ch.php?canal=" + encodeURIComponent(canal);
+            status.innerText = "ASSISTINDO: " + canal.toUpperCase();
         }
     }
 
-    // Lógica de Favoritos (LocalStorage)
+    // Lógica de Favoritos
     let favoritos = JSON.parse(localStorage.getItem('nelson_favs')) || [];
 
     function salvarFavorito() {
@@ -284,8 +295,6 @@ footer{
             favoritos.push(canal);
             localStorage.setItem('nelson_favs', JSON.stringify(favoritos));
             carregarFavoritos();
-        } else {
-            alert("Este canal já está nos favoritos!");
         }
     }
 
@@ -293,7 +302,7 @@ footer{
         favoritos = favoritos.filter(f => f !== canal);
         localStorage.setItem('nelson_favs', JSON.stringify(favoritos));
         carregarFavoritos();
-        event.stopPropagation(); // Evita abrir o canal ao deletar
+        event.stopPropagation();
     }
 
     function carregarFavoritos() {
@@ -321,7 +330,6 @@ footer{
         });
     }
 
-    // Atalho Enter
     document.getElementById("canalInput").addEventListener("keydown", function(e) {
         if (e.key === "Enter") abrirCanal();
     });
