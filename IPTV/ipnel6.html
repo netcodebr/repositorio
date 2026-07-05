@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nelson Remote System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        :root { --blue: #00aeff; --bg: #0b0b0b; --card: #1a1a1a; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background: var(--bg); color: #fff; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+        /* Seleção de Modo */
+        #selector { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+        .btn-modo { width: 280px; padding: 25px; background: var(--card); border-radius: 15px; border: 2px solid #333; cursor: pointer; text-align: center; }
+        .btn-modo:hover { border-color: var(--blue); }
+
+        /* Layout App */
+        #app { display: none; flex: 1; flex-direction: column; }
+        #remoteBar { padding: 10px; background: #000; display: flex; gap: 10px; border-bottom: 1px solid #222; align-items: center; font-size: 12px; }
+        #remoteBar input { background: #111; border: 1px solid var(--blue); color: #fff; padding: 5px; border-radius: 5px; width: 100px; }
+
+        /* Elementos de Controle (Mobile) */
+        #controls { display: none; padding: 20px; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .btn-cmd { padding: 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: var(--blue); color: #fff; }
+        .fav-list { display: flex; flex-direction: column; gap: 10px; }
+
+        /* Área da Tela (PC) */
+        #displayArea { display: none; flex: 1; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+        
+        .visible { display: flex !important; }
+    </style>
+</head>
+<body>
+
+    <div id="selector">
+        <h2>Selecione o Modo</h2>
+        <div class="btn-modo" onclick="initModo('display')">📺 MODO TELA (PC)</div>
+        <div class="btn-modo" onclick="initModo('remote')">📱 MODO CONTROLE (Celular)</div>
+    </div>
+
+    <div id="app">
+        <div id="remoteBar">
+            <span>COD:</span>
+            <input type="text" id="syncID" placeholder="Ex: 123" oninput="saveSyncID()">
+            <button onclick="localStorage.removeItem('modo'); location.reload()" style="background:none; color:#555; border:none; cursor:pointer;">Reset</button>
+        </div>
+
+        <!-- Interface de Controle (Celular) -->
+        <div id="controls">
+            <h3>Controles Remotos</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn-cmd" onclick="sendRemoteAction('play')">▶ PLAY</button>
+                <button class="btn-cmd" onclick="sendRemoteAction('pause')" style="background:#e74c3c;">⏸ PAUSE</button>
+            </div>
+            <input type="text" id="canalInput" placeholder="ID do Canal" style="padding:15px; border-radius:10px; border:none; background:#222; color:#fff;">
+            <button class="btn-cmd" onclick="sendRemoteAction('change_canal')">Trocar Canal</button>
+        </div>
+
+        <!-- Interface de Tela (PC) -->
+        <div id="displayArea">
+            <iframe id="playerFrame" allow="autoplay; fullscreen"></iframe>
+        </div>
+    </div>
+
+<script>
+    // 1. CONFIGURAÇÃO FIREBASE (SUBSTITUA PELAS SUAS CHAVES)
+    const firebaseConfig = {
+    
+    apiKey: "AIzaSyAmJBAfbaWCaFQJiQgEUEpzSbxF0q97VoU",
+    authDomain: "iptvjr.firebaseapp.com",
+    projectId: "iptvjr",
+    storageBucket: "iptvjr.firebasestorage.app",
+    messagingSenderId: "621271517429",
+    appId: "1:621271517429:web:0c266d7b97dafe53111dbc",
+    measurementId: "G-FSQZ25CMVH"
+
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let modo = '';
+
+    // Inicialização
+    window.onload = () => {
+        const savedModo = localStorage.getItem('modo');
+        const savedID = localStorage.getItem('syncID');
+        if(savedID) document.getElementById('syncID').value = savedID;
+        if(savedModo) initModo(savedModo);
+    };
+
+    function initModo(m) {
+        modo = m;
+        localStorage.setItem('modo', m);
+        document.getElementById('selector').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        
+        if(m === 'remote') {
+            document.getElementById('controls').classList.add('visible');
+        } else {
+            document.getElementById('displayArea').classList.add('visible');
+            startListener();
+        }
+    }
+
+    function saveSyncID() {
+        const id = document.getElementById('syncID').value;
+        localStorage.setItem('syncID', id);
+        if(modo === 'display') startListener();
+    }
+
+    // Lógica do Controlador (Envia para o Firebase)
+    function sendRemoteAction(action) {
+        const id = document.getElementById('syncID').value;
+        const canal = document.getElementById('canalInput').value;
+        if(!id) return alert("Digite o código de pareamento!");
+
+        db.ref('remote/' + id).set({
+            action: action,
+            canal: canal,
+            time: Date.now()
+        });
+    }
+
+    // Lógica da Tela (Ouve o Firebase e manda pro Iframe)
+    function startListener() {
+        const id = document.getElementById('syncID').value;
+        if(!id) return;
+
+        db.ref('remote/' + id).on('value', (snap) => {
+            const data = snap.val();
+            const frame = document.getElementById('playerFrame');
+            
+            if(!data) return;
+
+            if(data.action === 'change_canal') {
+                // SUBSTITUA PELO SEU ENDEREÇO DE PLAYER
+                frame.src = "https://redecanaistv.win/player3/ch.php?canal=" + data.canal;
+            } else {
+                // Envia Play/Pause para dentro do iframe usando postMessage
+                frame.contentWindow.postMessage(data.action, '*');
+            }
+        });
+    }
+</script>
+</body>
+</html>
