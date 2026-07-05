@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NELSON PLAYER - V2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        :root { --blue: #00aeff; --dark: #0b0b0b; --gray: #1a1a1a; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background: var(--dark); color: #fff; overflow: hidden; height: 100vh; }
+
+        #splash { position:fixed; inset:0; background:#000; display:flex; justify-content:center; align-items:center; z-index:99999; transition:0.8s; }
+        
+        #modoSelecao { 
+            position: fixed; inset: 0; background: #000; z-index: 9999; 
+            display: none; flex-direction: column; justify-content: center; align-items: center; gap: 20px;
+        }
+        .card-modo {
+            width: 85%; max-width: 300px; padding: 25px; background: var(--gray);
+            border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s;
+            border: 2px solid #333;
+        }
+        .card-modo:hover { border-color: var(--blue); }
+
+        #app { display:none; height:100vh; flex-direction: column; }
+        
+        #remoteBar { background: #000; padding: 10px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+        #remoteBar input { background: #111; border: 1px solid var(--blue); color: #fff; padding: 5px; border-radius: 5px; width: 100px; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        aside { width: 280px; background: #111; border-right: 1px solid #222; padding: 15px; overflow-y: auto; }
+        
+        main { flex: 1; display: flex; flex-direction: column; background: #000; }
+        header { height: 60px; background: #111; padding: 0 15px; display: flex; align-items: center; gap: 10px; }
+        .busca { flex: 1; display: flex; gap: 5px; }
+        .busca input { flex: 1; padding: 10px; border-radius: 8px; border: none; background: #222; color: #fff; }
+        
+        button { border: none; cursor: pointer; font-weight: 600; border-radius: 8px; }
+        .btn-play { background: var(--blue); color: #fff; padding: 0 15px; }
+        .btn-fav { background: #f1c40f; padding: 0 12px; }
+
+        #playerArea { flex: 1; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* AVISO DE CLIQUE PARA O MODO TELA */
+        #clickPrompt {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.8);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 10; cursor: pointer; text-align: center; padding: 20px;
+        }
+
+        body.modo-controle #playerArea, body.modo-controle #clickPrompt { display: none; }
+        body.modo-controle aside { width: 100%; }
+        
+        .fav-item { background: var(--gray); padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; }
+    </style>
+</head>
+<body>
+
+    <div id="splash"><h1 class="logo">NELSON</h1></div>
+
+    <div id="modoSelecao">
+        <h2>Como usar agora?</h2>
+        <div class="card-modo" onclick="setModo('display')"><h3>📺 MODO TELA</h3><p>Ver o vídeo (PC/TV)</p></div>
+        <div class="card-modo" onclick="setModo('remote')"><h3>📱 MODO CONTROLE</h3><p>Mudar canais (Celular)</p></div>
+    </div>
+
+    <div id="app">
+        <div id="remoteBar">
+            <span>COD:</span>
+            <input type="text" id="syncID" oninput="configurarRemoto()">
+            <button onclick="resetModo()" style="background:none; color:#555; font-size:10px; margin-left:auto;">Trocar Modo</button>
+        </div>
+
+        <div class="main-container">
+            <aside id="favoritosContainer">
+                <p style="color: var(--blue); font-size: 12px; margin-bottom: 10px;">⭐ CANAIS FAVORITOS</p>
+                <div id="listaFavoritos"></div>
+            </aside>
+
+            <main>
+                <header id="topSearch">
+                    <div class="busca">
+                        <input type="text" id="canalInput" value="gloob">
+                        <button class="btn-play" onclick="dispararCanal(true)">MUDAR</button>
+                        <button class="btn-fav" onclick="salvarFavorito()">★</button>
+                    </div>
+                </header>
+                <div id="playerArea">
+                    <!-- Prompt para permitir o som e play automático no PC -->
+                    <div id="clickPrompt" onclick="iniciarPlayerLocal()">
+                        <div>
+                            <h1 style="font-size: 50px;">▶</h1>
+                            <p>Clique aqui para preparar o player<br><small>(Necessário para liberar o som e o controle remoto)</small></p>
+                        </div>
+                    </div>
+                    <iframe id="mainPlayer" allow="autoplay; fullscreen; encrypted-media"></iframe>
+                </div>
+            </main>
+        </div>
+    </div>
+
+<script>
+    // CONFIGURAÇÃO FIREBASE (COLE AQUI)
+    const firebaseConfig = {
+    
+    apiKey: "AIzaSyAmJBAfbaWCaFQJiQgEUEpzSbxF0q97VoU",
+    authDomain: "iptvjr.firebaseapp.com",
+    projectId: "iptvjr",
+    storageBucket: "iptvjr.firebasestorage.app",
+    messagingSenderId: "621271517429",
+    appId: "1:621271517429:web:0c266d7b97dafe53111dbc",
+    measurementId: "G-FSQZ25CMVH"
+
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let currentRole = '';
+
+    window.onload = () => {
+        setTimeout(() => {
+            document.getElementById("splash").style.display = "none";
+            const m = localStorage.getItem('user_role');
+            if (m) setModo(m); else document.getElementById("modoSelecao").style.display = "flex";
+        }, 1500);
+    };
+
+    function setModo(role) {
+        currentRole = role;
+        localStorage.setItem('user_role', role);
+        document.getElementById("modoSelecao").style.display = "none";
+        document.getElementById("app").style.display = "flex";
+        if (role === 'remote') document.body.classList.add('modo-controle');
+        
+        const sid = localStorage.getItem('remote_id');
+        if(sid) { document.getElementById('syncID').value = sid; configurarRemoto(); }
+        carregarFavoritos();
+        if(role === 'display') dispararCanal(false);
+    }
+
+    function iniciarPlayerLocal() {
+        // Esconde o aviso e dá o primeiro sinal de vida pro player
+        document.getElementById("clickPrompt").style.display = "none";
+        dispararCanal(false);
+    }
+
+    function configurarRemoto() {
+        const id = document.getElementById('syncID').value.trim();
+        if(id.length < 2) return;
+        localStorage.setItem('remote_id', id);
+        if(currentRole === 'display') {
+            db.ref('nelson/' + id).on('value', (snap) => {
+                const data = snap.val();
+                if(data && data.canal) {
+                    document.getElementById('canalInput').value = data.canal;
+                    dispararCanal(false); 
+                }
+            });
+        }
+    }
+
+    function dispararCanal(enviar) {
+        const canal = document.getElementById('canalInput').value.trim();
+        const id = document.getElementById('syncID').value.trim();
+        if(!canal) return;
+
+        if(currentRole === 'display') {
+            // Adicionado autoplay=1 e som para tentar forçar o início
+            document.getElementById('mainPlayer').src = `https://redecanaistv.win/player3/ch.php?canal=${encodeURIComponent(canal)}&autoplay=1`;
+        }
+        if(enviar && id) {
+            db.ref('nelson/' + id).set({ canal: canal, time: Date.now() });
+        }
+    }
+
+    function resetModo() { localStorage.removeItem('user_role'); location.reload(); }
+
+    // FAVORITOS
+    let favoritos = JSON.parse(localStorage.getItem('n_favs')) || [];
+    function salvarFavorito() {
+        const c = document.getElementById('canalInput').value.trim().toLowerCase();
+        if(c && !favoritos.includes(c)) { favoritos.push(c); localStorage.setItem('n_favs', JSON.stringify(favoritos)); carregarFavoritos(); }
+    }
+    function carregarFavoritos() {
+        const l = document.getElementById('listaFavoritos');
+        l.innerHTML = "";
+        favoritos.forEach(c => {
+            const d = document.createElement('div'); d.className = 'fav-item';
+            d.onclick = () => { document.getElementById('canalInput').value = c; dispararCanal(true); };
+            d.innerHTML = `<span>📺 ${c.toUpperCase()}</span><button onclick="removerFav('${c}')" style="color:red; background:none;">X</button>`;
+            l.appendChild(d);
+        });
+    }
+    function removerFav(c) {
+        favoritos = favoritos.filter(f => f !== c); localStorage.setItem('n_favs', JSON.stringify(favoritos)); carregarFavoritos();
+        event.stopPropagation();
+    }
+</script>
+</body>
+</html>
