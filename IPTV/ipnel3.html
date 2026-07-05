@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NELSON PLAYER - COMPLETO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FIREBASE CORE -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <style>
+        :root { --blue: #00aeff; --dark: #0b0b0b; --gray: #1a1a1a; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+        body { background: var(--dark); color: #fff; overflow: hidden; height: 100vh; }
+
+        /* SPLASH */
+        #splash { position:fixed; inset:0; background:#000; display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:99999; transition:0.8s; }
+        .logo { font-size: 50px; font-weight:700; letter-spacing:10px; color:#fff; text-shadow: 0 0 20px var(--blue); }
+
+        /* APP LAYOUT */
+        #app { display:none; height:100vh; flex-direction: column; }
+        
+        /* BARRA REMOTA */
+        #remoteBar { background: #000; padding: 8px 15px; border-bottom: 1px solid #222; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #888; }
+        #remoteBar input { background: #111; border: 1px solid #333; color: var(--blue); padding: 4px 8px; border-radius: 4px; outline: none; width: 120px; }
+        .dot { width: 8px; height: 8px; background: #333; border-radius: 50%; }
+        .online { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
+
+        /* CONTAINER PRINCIPAL */
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+
+        /* SIDEBAR (FAVORITOS) */
+        aside { width: 260px; background: #111; border-right: 1px solid #222; padding: 20px; display: flex; flex-direction: column; transition: 0.3s; }
+        .fav-item { background: var(--gray); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .fav-item:hover { background: #252525; }
+        .btn-del { color: #ff4444; border: none; background: none; cursor: pointer; font-weight: bold; }
+
+        /* AREA DO PLAYER */
+        main { flex: 1; display: flex; flex-direction: column; }
+        header { height: 70px; background: #111; padding: 0 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #222; }
+        .busca { flex: 1; display: flex; gap: 8px; }
+        .busca input { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #222; color: #fff; }
+        .btn-play { background: var(--blue); color: #fff; padding: 0 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
+        .btn-fav { background: #f1c40f; padding: 0 15px; border-radius: 8px; border: none; cursor: pointer; font-size: 20px; }
+
+        #playerArea { flex: 1; background: #000; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* RESPONSIVIDADE */
+        @media (max-width: 768px) {
+            aside { display: none; } /* No celular, favoritos ficam ocultos para focar no controle */
+            header h2 { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="splash">
+        <div class="logo">NELSON</div>
+        <p style="color: #444; letter-spacing: 5px;">PLAYER</p>
+    </div>
+
+    <div id="app">
+        <!-- CONTROLE REMOTO -->
+        <div id="remoteBar">
+            <div id="statusDot" class="dot"></div>
+            <span>COD PAREAMENTO:</span>
+            <input type="text" id="syncID" placeholder="Ex: nelson123" oninput="configurarRemoto()">
+            <span id="remoteStatus">Offline</span>
+        </div>
+
+        <div class="main-container">
+            <!-- FAVORITOS -->
+            <aside>
+                <p style="font-size: 12px; color: var(--blue); margin-bottom: 15px;">⭐ MEUS FAVORITOS</p>
+                <div id="listaFavoritos"></div>
+            </aside>
+
+            <!-- PLAYER -->
+            <main>
+                <header>
+                    <div class="busca">
+                        <input type="text" id="canalInput" placeholder="ID do Canal (ex: globo, sbt...)" value="gloob">
+                        <button class="btn-play" onclick="dispararCanal(true)">ASSISTIR</button>
+                        <button class="btn-fav" onclick="salvarFavorito()">★</button>
+                    </div>
+                </header>
+                <div id="playerArea">
+                    <iframe id="mainPlayer" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+                </div>
+            </main>
+        </div>
+    </div>
+
+<script>
+    // 1. COLE SUAS CONFIGURAÇÕES DO FIREBASE AQUI
+    const firebaseConfig = {
+    
+    apiKey: "AIzaSyAmJBAfbaWCaFQJiQgEUEpzSbxF0q97VoU",
+    authDomain: "iptvjr.firebaseapp.com",
+    projectId: "iptvjr",
+    storageBucket: "iptvjr.firebasestorage.app",
+    messagingSenderId: "621271517429",
+    appId: "1:621271517429:web:0c266d7b97dafe53111dbc",
+    measurementId: "G-FSQZ25CMVH"
+
+    };
+
+    // Inicialização
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let monitorando = false;
+
+    // 2. LOGICA DO SPLASH
+    window.onload = () => {
+        setTimeout(() => {
+            document.getElementById("splash").style.opacity = "0";
+            setTimeout(() => {
+                document.getElementById("splash").style.display = "none";
+                document.getElementById("app").style.display = "flex";
+                
+                // Carregar Código Salvo
+                const savedID = localStorage.getItem('remote_id');
+                if(savedID) {
+                    document.getElementById('syncID').value = savedID;
+                    configurarRemoto();
+                }
+
+                carregarFavoritos();
+                dispararCanal(false);
+            }, 800);
+        }, 2000);
+    };
+
+    // 3. LOGICA DO PLAYER & REMOTO
+    function dispararCanal(deveEnviarRemoto) {
+        const canal = document.getElementById('canalInput').value.trim();
+        const pairID = document.getElementById('syncID').value.trim();
+        const player = document.getElementById('mainPlayer');
+
+        if(!canal) return;
+
+        // Muda localmente
+        player.src = "https://redecanaistv.win/player3/ch.php?canal=" + encodeURIComponent(canal);
+
+        // Envia para o Firebase para mudar no outro aparelho
+        if(deveEnviarRemoto && pairID) {
+            db.ref('remote_control/' + pairID).set({
+                canal: canal,
+                timestamp: Date.now()
+            });
+        }
+    }
+
+    function configurarRemoto() {
+        const id = document.getElementById('syncID').value.trim();
+        if(id.length < 3) return;
+
+        localStorage.setItem('remote_id', id);
+        document.getElementById('statusDot').className = "dot online";
+        document.getElementById('remoteStatus').innerText = "Conectado";
+
+        if(!monitorando) {
+            // Escuta se alguém mudar o canal via Firebase
+            db.ref('remote_control/' + id).on('value', (snap) => {
+                const data = snap.val();
+                if(data && data.canal) {
+                    document.getElementById('canalInput').value = data.canal;
+                    dispararCanal(false); // Muda o player sem reenviar para o banco
+                }
+            });
+            monitorando = true;
+        }
+    }
+
+    // 4. LOGICA DE FAVORITOS
+    let favoritos = JSON.parse(localStorage.getItem('n_favs')) || [];
+
+    function salvarFavorito() {
+        const canal = document.getElementById('canalInput').value.trim().toLowerCase();
+        if(canal && !favoritos.includes(canal)) {
+            favoritos.push(canal);
+            localStorage.setItem('n_favs', JSON.stringify(favoritos));
+            carregarFavoritos();
+        }
+    }
+
+    function removerFav(canal) {
+        favoritos = favoritos.filter(f => f !== canal);
+        localStorage.setItem('n_favs', JSON.stringify(favoritos));
+        carregarFavoritos();
+        event.stopPropagation();
+    }
+
+    function carregarFavoritos() {
+        const lista = document.getElementById('listaFavoritos');
+        lista.innerHTML = "";
+        favoritos.forEach(canal => {
+            const div = document.createElement('div');
+            div.className = 'fav-item';
+            div.onclick = () => { document.getElementById('canalInput').value = canal; dispararCanal(true); };
+            div.innerHTML = `<span>📺 ${canal.toUpperCase()}</span><button class="btn-del" onclick="removerFav('${canal}')">X</button>`;
+            lista.appendChild(div);
+        });
+    }
+
+    // Atalho Enter
+    document.getElementById("canalInput").addEventListener("keydown", e => { if(e.key === "Enter") dispararCanal(true); });
+
+</script>
+</body>
+</html>
